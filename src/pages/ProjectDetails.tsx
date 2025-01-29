@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { NeedsList } from "@/components/NeedsList";
+import { ArrowLeft } from "lucide-react";
 
 interface Project {
   proyectoid: number;
@@ -43,7 +44,7 @@ export default function ProjectDetails() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        navigate("/");
+        navigate("/login");
       }
     };
 
@@ -53,7 +54,7 @@ export default function ProjectDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[200px]">
         <p>Loading...</p>
       </div>
     );
@@ -61,36 +62,29 @@ export default function ProjectDetails() {
 
   if (error || !project) {
     return (
-      <div className="min-h-screen p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md mb-4">
-            {error || "Project not found"}
-          </div>
-          <Button onClick={() => navigate("/home")}>Back to Projects</Button>
-        </div>
+      <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+        {error || "Project not found"}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <Button
-              variant="outline"
-              className="mb-4"
-              onClick={() => navigate("/home")}
-            >
-              Back to Projects
-            </Button>
-            <h1 className="text-3xl font-bold">{project.nombreproyecto}</h1>
-          </div>
-        </div>
+    <div>
+      <div className="mb-8">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-4"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <h1 className="text-3xl font-bold">{project.nombreproyecto}</h1>
+      </div>
 
-        <div className="p-4 rounded-lg border bg-card">
-          <NeedsList projectId={project.proyectoid} onClose={() => {}} />
-        </div>
+      <div className="rounded-lg border bg-card">
+        <NeedsList projectId={project.proyectoid} onClose={() => {}} />
       </div>
     </div>
   );

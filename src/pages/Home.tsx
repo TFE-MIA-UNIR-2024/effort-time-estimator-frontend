@@ -77,102 +77,87 @@ export default function Home() {
     setEditingProjectId(undefined);
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[200px]">
         <p>Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Projects</h1>
-          <div className="flex gap-4">
-            <Button
-              onClick={() => {
-                setEditingProjectId(undefined);
-                setShowForm(true);
-              }}
-            >
-              New Project
-            </Button>
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Sign out
-            </button>
-          </div>
+    <div>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Projects</h1>
+        <Button
+          onClick={() => {
+            setEditingProjectId(undefined);
+            setShowForm(true);
+          }}
+        >
+          New Project
+        </Button>
+      </div>
+
+      {showForm && (
+        <div className="mb-8 p-4 rounded-lg border bg-card">
+          <ProjectForm
+            projectId={editingProjectId}
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+          />
         </div>
+      )}
 
-        {showForm && (
-          <div className="mb-8 p-4 rounded-lg border bg-card">
-            <ProjectForm
-              projectId={editingProjectId}
-              onSuccess={handleFormSuccess}
-              onCancel={handleFormCancel}
-            />
-          </div>
-        )}
+      {error && (
+        <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md mb-4">
+          {error}
+        </div>
+      )}
 
-        {error && (
-          <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md mb-4">
-            {error}
-          </div>
-        )}
-
-        <div className="grid gap-4">
-          {projects.map((project) => (
-            <div
-              key={project.proyectoid}
-              className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold">
-                    {project.nombreproyecto}
-                  </h2>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate(`/project/${project.proyectoid}`)}
-                  >
-                    View Details
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setShowForm(true);
-                      setTimeout(() => {
-                        setEditingProjectId(project.proyectoid);
-                      }, 0);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(project.proyectoid)}
-                  >
-                    Delete
-                  </Button>
-                </div>
+      <div className="grid gap-4">
+        {projects.map((project) => (
+          <div
+            key={project.proyectoid}
+            className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-semibold">
+                  {project.nombreproyecto}
+                </h2>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/project/${project.proyectoid}`)}
+                >
+                  View Details
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowForm(true);
+                    setTimeout(() => {
+                      setEditingProjectId(project.proyectoid);
+                    }, 0);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(project.proyectoid)}
+                >
+                  Delete
+                </Button>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );
