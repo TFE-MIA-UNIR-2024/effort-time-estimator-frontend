@@ -3,7 +3,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Wand2 } from "lucide-react";
+import {
+  getRequirementsTitles,
+  getRequirementDescriptions,
+} from "@/lib/openAIMock";
 
 interface Need {
   necesidadid: number;
@@ -11,7 +15,7 @@ interface Need {
   nombrenecesidad: string;
   proyectoid: number;
   fechacreacion: string;
-  texto: string;
+  cuerpo: string;
   url: string;
 }
 
@@ -22,7 +26,7 @@ interface Requirement {
   necesidadid: number;
   tiporequerimientoid: number;
   fechacreacion: string;
-  texto: string;
+  cuerpo: string;
 }
 
 export default function NeedDetails() {
@@ -38,8 +42,9 @@ export default function NeedDetails() {
   const [formData, setFormData] = useState({
     codigorequerimiento: "",
     nombrerequerimiento: "",
-    texto: "",
+    cuerpo: "",
   });
+  const [aiLoading, setAiLoading] = useState(false);
 
   const fetchNeed = async () => {
     try {
@@ -101,13 +106,13 @@ export default function NeedDetails() {
       setFormData({
         codigorequerimiento: editingRequirement.codigorequerimiento,
         nombrerequerimiento: editingRequirement.nombrerequerimiento,
-        texto: editingRequirement.texto || "",
+        cuerpo: editingRequirement.cuerpo || "",
       });
     } else {
       setFormData({
         codigorequerimiento: "",
         nombrerequerimiento: "",
-        texto: "",
+        cuerpo: "",
       });
     }
   }, [editingRequirement]);
@@ -124,7 +129,7 @@ export default function NeedDetails() {
           .update({
             codigorequerimiento: formData.codigorequerimiento,
             nombrerequerimiento: formData.nombrerequerimiento,
-            texto: formData.texto,
+            cuerpo: formData.cuerpo,
           })
           .eq("requerimientoid", editingRequirement.requerimientoid);
 
@@ -134,7 +139,7 @@ export default function NeedDetails() {
           {
             codigorequerimiento: formData.codigorequerimiento,
             nombrerequerimiento: formData.nombrerequerimiento,
-            texto: formData.texto,
+            cuerpo: formData.cuerpo,
             necesidadid: id,
             tiporequerimientoid: 1,
             fechacreacion: new Date().toISOString(),
@@ -147,7 +152,7 @@ export default function NeedDetails() {
       setFormData({
         codigorequerimiento: "",
         nombrerequerimiento: "",
-        texto: "",
+        cuerpo: "",
       });
       setShowForm(false);
       setEditingRequirement(null);
@@ -194,8 +199,57 @@ export default function NeedDetails() {
     setFormData({
       codigorequerimiento: "",
       nombrerequerimiento: "",
-      texto: "",
+      cuerpo: "",
     });
+  };
+
+  const handleExtractRequirements = async () => {
+    if (!need?.cuerpo) {
+      setError("No text available to extract requirements from");
+      return;
+    }
+
+    setAiLoading(true);
+    setError(null);
+
+    try {
+      // First get the titles
+      const titles = await getRequirementsTitles(need.cuerpo);
+
+      // Then get descriptions for each title
+      const descriptions = await getRequirementDescriptions(
+        titles,
+        need.cuerpo
+      );
+
+      console.log(descriptions);
+
+      // Create new requirements from the AI results
+      const newRequirements = descriptions.map((item, index) => ({
+        codigorequerimiento: `REQ-${String(index + 1).padStart(3, "0")}`,
+        nombrerequerimiento: item.titulo,
+        cuerpo: item.description,
+        necesidadid: Number(id),
+        tiporequerimientoid: 1,
+        fechacreacion: new Date().toISOString(),
+      }));
+
+      // Insert all new requirements
+      const { error } = await supabase
+        .from("requerimiento")
+        .insert(newRequirements);
+
+      if (error) throw error;
+
+      // Refresh the requirements list
+      await fetchRequirements();
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Error extracting requirements"
+      );
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   if (loading && !need) {
@@ -229,9 +283,7 @@ export default function NeedDetails() {
           </Button>
           <h1 className="text-3xl font-bold">{need.nombrenecesidad}</h1>
           <p className="text-muted-foreground">Code: {need.codigonecesidad}</p>
-          {need.texto && (
-            <p className="text-muted-foreground mt-2">{need.texto}</p>
-          )}
+
           {need.url && (
             <a
               href={need.url}
@@ -243,7 +295,19 @@ export default function NeedDetails() {
             </a>
           )}
         </div>
-        <Button onClick={() => setShowForm(true)}>Add Requirement</Button>
+        <div className="flex gap-2">
+          {need.cuerpo && (
+            <Button
+              variant="outline"
+              onClick={handleExtractRequirements}
+              disabled={aiLoading}
+            >
+              <Wand2 className="mr-2 h-4 w-4" />
+              {aiLoading ? "Extracting..." : "Extract Requirements with AI"}
+            </Button>
+          )}
+          <Button onClick={() => setShowForm(true)}>Add Requirement</Button>
+        </div>
       </div>
 
       {error && (
@@ -280,11 +344,11 @@ export default function NeedDetails() {
               />
               <Input
                 placeholder="Description"
-                value={formData.texto}
+                value={formData.cuerpo}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    texto: e.target.value,
+                    cuerpo: e.target.value,
                   })
                 }
               />
@@ -333,8 +397,8 @@ export default function NeedDetails() {
                     Created:{" "}
                     {new Date(requirement.fechacreacion).toLocaleDateString()}
                   </p>
-                  {requirement.texto && (
-                    <p className="text-sm mt-2">{requirement.texto}</p>
+                  {requirement.cuerpo && (
+                    <p className="text-sm mt-2">{requirement.cuerpo}</p>
                   )}
                 </div>
                 <div className="flex gap-2">
