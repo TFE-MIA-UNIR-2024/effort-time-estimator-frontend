@@ -315,3 +315,63 @@ export async function getRequirementDescriptions(
 
   return descriptions;
 }
+
+export async function getRequirementDescription(
+  title: string,
+  completeDocument: string
+): Promise<string> {
+  const prompt = `
+    Eres un experto en extracción de datos estructurados.
+    Se te proporcionará un título y un documento completo.
+    Además, debes considerar que este título es uno de al menos 20 títulos extraídos previamente del mismo documento.
+
+    A partir de esto, genera una descripción detallada para el título proporcionado.
+
+    Título:
+    "${title}"
+
+    Documento completo:
+    ${completeDocument}
+
+    La descripción debe ser clara, concisa y cubrir todos los aspectos relevantes del título basado en la información del documento.
+    Asegúrate de mantener la coherencia con las descripciones de los otros títulos extraídos.
+  `;
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${import.meta.env.VITE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4", // Asegúrate de que el nombre del modelo sea correcto
+      messages: [
+        {
+          role: "system",
+          content: prompt,
+        },
+      ],
+      temperature: 0.7, // Puedes ajustar la temperatura según tus necesidades
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error en la API de OpenAI: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  // Asegúrate de que la respuesta contenga el contenido esperado
+  if (
+    !data.choices ||
+    !data.choices[0] ||
+    !data.choices[0].message ||
+    !data.choices[0].message.content
+  ) {
+    throw new Error("Respuesta inesperada de la API de OpenAI.");
+  }
+
+  const description = data.choices[0].message.content.trim();
+
+  return description;
+}

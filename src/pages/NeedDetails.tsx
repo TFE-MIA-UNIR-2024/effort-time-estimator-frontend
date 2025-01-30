@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Wand2 } from "lucide-react";
 import {
   getRequirementsTitles,
-  getRequirementDescriptions,
+  getRequirementDescription, // Asegúrate de importar la nueva función
 } from "@/lib/openAIMock";
 
 interface Need {
@@ -45,6 +45,7 @@ export default function NeedDetails() {
     cuerpo: "",
   });
   const [aiLoading, setAiLoading] = useState(false);
+  const [progress, setProgress] = useState<number>(0); // Nuevo estado para el progreso
 
   const fetchNeed = async () => {
     try {
@@ -211,20 +212,30 @@ export default function NeedDetails() {
 
     setAiLoading(true);
     setError(null);
+    setProgress(0); // Iniciar el progreso
 
     try {
-      // First get the titles
+      // Paso 1: Obtener los títulos
       const titles = await getRequirementsTitles(need.cuerpo);
+      setProgress(20); // Asumiendo que obtener títulos es el 20% del total
 
-      // Then get descriptions for each title
-      const descriptions = await getRequirementDescriptions(
-        titles,
-        need.cuerpo
-      );
+      // Paso 2: Obtener descripciones para cada título
+      const descriptions: DescriptionItem[] = [];
+      const totalTitles = titles.length;
+      for (let i = 0; i < totalTitles; i++) {
+        const item = titles[i];
+        const description = await getRequirementDescription(
+          item.title,
+          need.cuerpo
+        );
+        descriptions.push({
+          titulo: item.title,
+          description,
+        });
+        setProgress(20 + Math.round(((i + 1) / totalTitles) * 80)); // Actualizar el progreso
+      }
 
-      console.log(descriptions);
-
-      // Create new requirements from the AI results
+      // Crear nuevos requerimientos a partir de los resultados de la IA
       const newRequirements = descriptions.map((item, index) => ({
         codigorequerimiento: `REQ-${String(index + 1).padStart(3, "0")}`,
         nombrerequerimiento: item.titulo,
@@ -234,21 +245,22 @@ export default function NeedDetails() {
         fechacreacion: new Date().toISOString(),
       }));
 
-      // Insert all new requirements
+      // Insertar todos los nuevos requerimientos
       const { error } = await supabase
         .from("requerimiento")
         .insert(newRequirements);
-
       if (error) throw error;
 
-      // Refresh the requirements list
+      // Actualizar la lista de requerimientos
       await fetchRequirements();
+      setProgress(100); // Progreso completo
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Error extracting requirements"
       );
     } finally {
       setAiLoading(false);
+      setTimeout(() => setProgress(0), 1000); // Resetear el progreso después de un segundo
     }
   };
 
@@ -309,6 +321,19 @@ export default function NeedDetails() {
           <Button onClick={() => setShowForm(true)}>Add Requirement</Button>
         </div>
       </div>
+
+      {/* Barra de Progreso */}
+      {aiLoading && (
+        <div className="mb-4">
+          <div className="w-full bg-gray-200 rounded-full h-4">
+            <div
+              className="bg-blue-600 h-4 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          <p className="text-sm text-center mt-1">{progress}% Completo</p>
+        </div>
+      )}
 
       {error && (
         <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md mb-4">
