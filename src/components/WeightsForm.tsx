@@ -1,14 +1,16 @@
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { WeightFormData } from "@/types/need";
 import { Loader2 } from "lucide-react";
 
 interface WeightsFormProps {
   weightFormData: WeightFormData;
   onWeightChange: (key: keyof WeightFormData, value: number) => void;
+  onSave?: () => void;
   loading?: boolean;
 }
 
-export function WeightsForm({ weightFormData, onWeightChange, loading = false }: WeightsFormProps) {
+export function WeightsForm({ weightFormData, onWeightChange, onSave, loading = false }: WeightsFormProps) {
   return (
     <div className="relative">
       {loading && (
@@ -32,6 +34,11 @@ export function WeightsForm({ weightFormData, onWeightChange, loading = false }:
             />
           </div>
         ))}
+      </div>
+      <div className="mt-4 flex justify-end">
+        <Button onClick={onSave} disabled={loading}>
+          Save
+        </Button>
       </div>
     </div>
   );

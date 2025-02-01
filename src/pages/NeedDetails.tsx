@@ -21,19 +21,19 @@ import { Need, WeightFormData, Requirement } from "@/types/need";
 import { WeightsForm } from "@/components/WeightsForm";
 
 const emptyWeightForm: WeightFormData = {
-  tablas: 0,
-  triggersSP: 0,
-  interfacesAplicativos: 0,
-  formularios: 0,
-  subrutinasComplejas: 0,
-  interfacesBD: 0,
-  reportes: 0,
-  componentes: 0,
-  javascript: 0,
-  componentesConfigPruebas: 0,
-  despliegueAppMovil: 0,
-  qa: 0,
-  pf: 0
+  Tablas: 0,
+  "Triggers/SP": 0,
+  "Interfaces c/aplicativos": 0,
+  Formularios: 0,
+  "Subrutinas complejas": 0,
+  "Interfaces con BD": 0,
+  Reportes: 0,
+  Componentes: 0,
+  Javascript: 0,
+  "Componentes Config. y Pruebas": 0,
+  "Despliegue app movil": 0,
+  QA: 0,
+  PF: 0,
 };
 
 export default function NeedDetails() {
@@ -225,19 +225,19 @@ export default function NeedDetails() {
       if (details && details.length > 0) {
         const weights = details[0];
         setWeightFormData({
-          tablas: weights.tablas,
-          triggersSP: weights.triggersSP,
-          interfacesAplicativos: weights.interfacesAplicativos,
-          formularios: weights.formularios,
-          subrutinasComplejas: weights.subrutinasComplejas,
-          interfacesBD: weights.interfacesBD,
-          reportes: weights.reportes,
-          componentes: weights.componentes,
-          javascript: weights.javascript,
-          componentesConfigPruebas: weights.componentesConfigPruebas,
-          despliegueAppMovil: weights.despliegueAppMovil,
-          qa: weights.qa,
-          pf: weights.pf
+          Tablas: weights.tablas,
+          "Triggers/SP": weights.triggersSP,
+          "Interfaces c/aplicativos": weights.interfacesAplicativos,
+          Formularios: weights.formularios,
+          "Subrutinas complejas": weights.subrutinasComplejas,
+          "Interfaces con BD": weights.interfacesBD,
+          Reportes: weights.reportes,
+          Componentes: weights.componentes,
+          Javascript: weights.javascript,
+          "Componentes Config. y Pruebas": weights.componentesConfigPruebas,
+          "Despliegue app movil": weights.despliegueAppMovil,
+          QA: weights.qa,
+          PF: weights.pf,
         });
       }
     } catch (error) {
@@ -496,6 +496,44 @@ export default function NeedDetails() {
                             [key]: value,
                           }))
                         }
+                        onSave={async () => {
+                          try {
+                            const tipoElementoMap: Record<string, number> = {
+                              Tablas: 1,
+                              "Triggers/SP": 2,
+                              "Interfaces c/aplicativos": 3,
+                              Formularios: 4,
+                              "Subrutinas complejas": 5,
+                              "Interfaces con BD": 6,
+                              Reportes: 7,
+                              Componentes: 8,
+                              Javascript: 9,
+                              "Componentes Config. y Pruebas": 10,
+                              "Despliegue app movil": 11,
+                              QA: 12,
+                              PF: 13,
+                            };
+
+                            const { error } = await supabase
+                              .from("punto_funcion")
+                              .insert(
+                                Object.entries(weightFormData).map(
+                                  ([key, value]) => ({
+                                    cantidad_estimada: value,
+                                    tipo_elemento_afectado_id:
+                                      tipoElementoMap[key],
+                                    requerimientoid:
+                                      selectedRequirement?.requerimientoid,
+                                  })
+                                )
+                              );
+
+                            if (error) throw error;
+                          } catch (error) {
+                            console.error("Error saving weights:", error);
+                            setError("Error saving weights");
+                          }
+                        }}
                         loading={aiLoading}
                       />
                     </SheetContent>
@@ -528,6 +566,43 @@ export default function NeedDetails() {
                             [key]: value,
                           }))
                         }
+                        onSave={async () => {
+                          try {
+                            const tipoElementoMap: Record<string, number> = {
+                              Tablas: 1,
+                              "Triggers/SP": 2,
+                              "Interfaces c/aplicativos": 3,
+                              Formularios: 4,
+                              "Subrutinas complejas": 5,
+                              "Interfaces con BD": 6,
+                              Reportes: 7,
+                              Componentes: 8,
+                              Javascript: 9,
+                              "Componentes Config. y Pruebas": 10,
+                              "Despliegue app movil": 11,
+                              QA: 12,
+                              PF: 13,
+                            };
+
+                            const { error } = await supabase
+                              .from("punto_funcion")
+                              .insert(
+                                Object.entries(weightFormData).map(
+                                  ([key, value]) => ({
+                                    cantidad_estim: value,
+                                    tipo_elemento: tipoElementoMap[key],
+                                    requerimiento:
+                                      selectedRequirement?.requerimientoid,
+                                  })
+                                )
+                              );
+
+                            if (error) throw error;
+                          } catch (error) {
+                            console.error("Error saving weights:", error);
+                            setError("Error saving weights");
+                          }
+                        }}
                         loading={false}
                       />
                     </SheetContent>
