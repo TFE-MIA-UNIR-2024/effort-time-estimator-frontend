@@ -19,6 +19,7 @@ import {
 } from "@/lib/openAIMock";
 import { Need, WeightFormData, Requirement } from "@/types/need";
 import { WeightsForm } from "@/components/WeightsForm";
+import { useToast } from "@/components/ui/use-toast";
 
 const emptyWeightForm: WeightFormData = {
   Tablas: 0,
@@ -37,6 +38,7 @@ const emptyWeightForm: WeightFormData = {
 };
 
 export default function NeedDetails() {
+  const { toast } = useToast();
   const navigate = useNavigate();
   const { id } = useParams();
   const [need, setNeed] = useState<Need | null>(null);
@@ -57,6 +59,10 @@ export default function NeedDetails() {
     useState<WeightFormData>(emptyWeightForm);
   const [selectedRequirement, setSelectedRequirement] =
     useState<Requirement | null>(null);
+  const [requirementPuntosFuncion, setRequirementPuntosFuncion] = useState<
+    Record<number, boolean>
+  >({});
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const fetchNeed = async () => {
     try {
@@ -74,6 +80,28 @@ export default function NeedDetails() {
       setNeed(data);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Error fetching need");
+    }
+  };
+
+  const fetchPuntosFuncion = async () => {
+    try {
+      const { data, error } = await supabase.from("punto_funcion").select("*");
+
+      if (error) throw error;
+
+      const puntosFuncionMap = (data || []).reduce<Record<number, boolean>>(
+        (acc, item) => {
+          if (item.requerimiento) {
+            acc[item.requerimiento] = true;
+          }
+          return acc;
+        },
+        {}
+      );
+
+      setRequirementPuntosFuncion(puntosFuncionMap);
+    } catch (error) {
+      console.error("Error fetching puntos funcion:", error);
     }
   };
 
@@ -111,6 +139,7 @@ export default function NeedDetails() {
     checkUser();
     fetchNeed();
     fetchRequirements();
+    fetchPuntosFuncion();
   }, [id, navigate]);
 
   useEffect(() => {
@@ -469,75 +498,92 @@ export default function NeedDetails() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Sheet>
-                    <SheetTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedRequirement(requirement);
-                          handleGenerateWeights(requirement);
-                        }}
-                      >
-                        Generate Weights
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent>
-                      <SheetHeader>
-                        <SheetTitle>
-                          Weights for {selectedRequirement?.nombrerequerimiento}
-                        </SheetTitle>
-                      </SheetHeader>
-                      <WeightsForm
-                        weightFormData={weightFormData}
-                        onWeightChange={(key, value) =>
-                          setWeightFormData((prev) => ({
-                            ...prev,
-                            [key]: value,
-                          }))
-                        }
-                        onSave={async () => {
-                          try {
-                            const tipoElementoMap: Record<string, number> = {
-                              Tablas: 1,
-                              "Triggers/SP": 2,
-                              "Interfaces c/aplicativos": 3,
-                              Formularios: 4,
-                              "Subrutinas complejas": 5,
-                              "Interfaces con BD": 6,
-                              Reportes: 7,
-                              Componentes: 8,
-                              Javascript: 9,
-                              "Componentes Config. y Pruebas": 10,
-                              "Despliegue app movil": 11,
-                              QA: 12,
-                              PF: 13,
-                            };
-
-                            const { error } = await supabase
-                              .from("punto_funcion")
-                              .insert(
-                                Object.entries(weightFormData).map(
-                                  ([key, value]) => ({
-                                    cantidad_estimada: value,
-                                    tipo_elemento_afectado_id:
-                                      tipoElementoMap[key],
-                                    requerimientoid:
-                                      selectedRequirement?.requerimientoid,
-                                  })
-                                )
-                              );
-
-                            if (error) throw error;
-                          } catch (error) {
-                            console.error("Error saving weights:", error);
-                            setError("Error saving weights");
+                  {!requirementPuntosFuncion[requirement.requerimientoid] && (
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedRequirement(requirement);
+                            handleGenerateWeights(requirement);
+                          }}
+                        >
+                          Generate Weights
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent>
+                        <SheetHeader>
+                          <SheetTitle>
+                            Weights for{" "}
+                            {selectedRequirement?.nombrerequerimiento}
+                          </SheetTitle>
+                        </SheetHeader>
+                        <WeightsForm
+                          weightFormData={weightFormData}
+                          onWeightChange={(key, value) =>
+                            setWeightFormData((prev) => ({
+                              ...prev,
+                              [key]: value,
+                            }))
                           }
-                        }}
-                        loading={aiLoading}
-                      />
-                    </SheetContent>
-                  </Sheet>
+                          onSave={async () => {
+                            setSaveLoading(true);
+                            try {
+                              const tipoElementoMap: Record<string, number> = {
+                                Tablas: 1,
+                                "Triggers/SP": 2,
+                                "Interfaces c/aplicativos": 3,
+                                Formularios: 4,
+                                "Subrutinas complejas": 5,
+                                "Interfaces con BD": 6,
+                                Reportes: 7,
+                                Componentes: 8,
+                                Javascript: 9,
+                                "Componentes Config. y Pruebas": 10,
+                                "Despliegue app movil": 11,
+                                QA: 12,
+                                PF: 13,
+                              };
+
+                              const { error } = await supabase
+                                .from("punto_funcion")
+                                .insert(
+                                  Object.entries(weightFormData).map(
+                                    ([key, value]) => ({
+                                      cantidad_estimada: value,
+                                      tipo_elemento_afectado_id:
+                                        tipoElementoMap[key],
+                                      requerimientoid:
+                                        selectedRequirement?.requerimientoid,
+                                    })
+                                  )
+                                );
+
+                              if (error) throw error;
+
+                              toast({
+                                title: "Success",
+                                description: "Weights saved successfully",
+                              });
+                              await fetchPuntosFuncion();
+                            } catch (error) {
+                              console.error("Error saving weights:", error);
+                              toast({
+                                title: "Error",
+                                description: "Error saving weights",
+                                variant: "destructive",
+                              });
+                            } finally {
+                              setSaveLoading(false);
+                            }
+                          }}
+                          loading={aiLoading}
+                          saveLoading={saveLoading}
+                        />
+                      </SheetContent>
+                    </Sheet>
+                  )}
                   <Sheet>
                     <SheetTrigger asChild>
                       <Button
@@ -548,14 +594,18 @@ export default function NeedDetails() {
                           handleOpenEmptyForm();
                         }}
                       >
-                        Empty Form
+                        {requirementPuntosFuncion[requirement.requerimientoid]
+                          ? "Edit Form"
+                          : "Empty Form"}
                       </Button>
                     </SheetTrigger>
                     <SheetContent>
                       <SheetHeader>
                         <SheetTitle>
-                          Empty Form for{" "}
-                          {selectedRequirement?.nombrerequerimiento}
+                          {requirementPuntosFuncion[requirement.requerimientoid]
+                            ? "Edit"
+                            : "Empty"}{" "}
+                          Form for {selectedRequirement?.nombrerequerimiento}
                         </SheetTitle>
                       </SheetHeader>
                       <WeightsForm
@@ -567,6 +617,7 @@ export default function NeedDetails() {
                           }))
                         }
                         onSave={async () => {
+                          setSaveLoading(true);
                           try {
                             const tipoElementoMap: Record<string, number> = {
                               Tablas: 1,
@@ -598,12 +649,25 @@ export default function NeedDetails() {
                               );
 
                             if (error) throw error;
+
+                            toast({
+                              title: "Success",
+                              description: "Weights saved successfully",
+                            });
+                            await fetchPuntosFuncion();
                           } catch (error) {
                             console.error("Error saving weights:", error);
-                            setError("Error saving weights");
+                            toast({
+                              title: "Error",
+                              description: "Error saving weights",
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setSaveLoading(false);
                           }
                         }}
                         loading={false}
+                        saveLoading={saveLoading}
                       />
                     </SheetContent>
                   </Sheet>

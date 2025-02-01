@@ -6,11 +6,12 @@ import { Loader2 } from "lucide-react";
 interface WeightsFormProps {
   weightFormData: WeightFormData;
   onWeightChange: (key: keyof WeightFormData, value: number) => void;
-  onSave?: () => void;
+  onSave?: () => Promise<void>;
   loading?: boolean;
+  saveLoading?: boolean;
 }
 
-export function WeightsForm({ weightFormData, onWeightChange, onSave, loading = false }: WeightsFormProps) {
+export function WeightsForm({ weightFormData, onWeightChange, onSave, loading = false, saveLoading = false }: WeightsFormProps) {
   return (
     <div className="relative">
       {loading && (
@@ -36,8 +37,15 @@ export function WeightsForm({ weightFormData, onWeightChange, onSave, loading = 
         ))}
       </div>
       <div className="mt-4 flex justify-end">
-        <Button onClick={onSave} disabled={loading}>
-          Save
+        <Button onClick={onSave} disabled={loading || saveLoading}>
+          {saveLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save"
+          )}
         </Button>
       </div>
     </div>
