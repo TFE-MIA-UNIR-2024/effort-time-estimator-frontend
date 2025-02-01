@@ -11,7 +11,13 @@ interface WeightsFormProps {
   saveLoading?: boolean;
 }
 
-export function WeightsForm({ weightFormData, onWeightChange, onSave, loading = false, saveLoading = false }: WeightsFormProps) {
+export function WeightsForm({
+  weightFormData,
+  onWeightChange,
+  onSave,
+  loading = false,
+  saveLoading = false,
+}: WeightsFormProps) {
   return (
     <div className="relative">
       {loading && (

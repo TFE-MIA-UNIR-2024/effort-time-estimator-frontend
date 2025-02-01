@@ -60,8 +60,8 @@ export default function NeedDetails() {
   const [selectedRequirement, setSelectedRequirement] =
     useState<Requirement | null>(null);
   const [requirementPuntosFuncion, setRequirementPuntosFuncion] = useState<
-    Record<number, boolean>
-  >({});
+    any[]
+  >([]);
   const [saveLoading, setSaveLoading] = useState(false);
 
   const fetchNeed = async () => {
@@ -85,21 +85,14 @@ export default function NeedDetails() {
 
   const fetchPuntosFuncion = async () => {
     try {
-      const { data, error } = await supabase.from("punto_funcion").select("*");
+      // Consulta para obtener los puntos de función junto con el nombre del tipo de elemento afectado
+      const { data, error } = await supabase.from("punto_funcion").select(
+        "*, tipo_elemento_afectado(activo)" // Incluye el estado activo del tipo de elemento afectado en la respuesta
+      );
 
       if (error) throw error;
 
-      const puntosFuncionMap = (data || []).reduce<Record<number, boolean>>(
-        (acc, item) => {
-          if (item.requerimiento) {
-            acc[item.requerimiento] = true;
-          }
-          return acc;
-        },
-        {}
-      );
-
-      setRequirementPuntosFuncion(puntosFuncionMap);
+      setRequirementPuntosFuncion(data);
     } catch (error) {
       console.error("Error fetching puntos funcion:", error);
     }
@@ -277,8 +270,81 @@ export default function NeedDetails() {
     }
   };
 
-  const handleOpenEmptyForm = () => {
-    setWeightFormData(emptyWeightForm);
+  // Función para abrir el formulario de puntos de función con datos existentes (si los hay)
+  const handleOpenWeightForm = (requirement: Requirement) => {
+    setSelectedRequirement(requirement);
+
+    // Filtra los puntos de función para este requerimiento
+    const existingPoints = requirementPuntosFuncion.filter(
+      (pf) => pf.requerimientoid === requirement.requerimientoid
+    );
+
+    if (existingPoints.length > 0) {
+      const newWeightFormData = { ...emptyWeightForm };
+
+      existingPoints.forEach((pf) => {
+        switch (pf.tipo_elemento_afectado_id) {
+          case 1:
+            newWeightFormData.Tablas =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 2:
+            newWeightFormData["Triggers/SP"] =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 3:
+            newWeightFormData["Interfaces c/aplicativos"] =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 4:
+            newWeightFormData.Formularios =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 5:
+            newWeightFormData["Subrutinas complejas"] =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 6:
+            newWeightFormData["Interfaces con BD"] =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 7:
+            newWeightFormData.Reportes =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 8:
+            newWeightFormData.Componentes =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 9:
+            newWeightFormData.Javascript =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 10:
+            newWeightFormData["Componentes Config. y Pruebas"] =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 11:
+            newWeightFormData["Despliegue app movil"] =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 12:
+            newWeightFormData.QA =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          case 13:
+            newWeightFormData.PF =
+              pf.cantidad_estimada || pf.cantidad_estim || 0;
+            break;
+          default:
+            break;
+        }
+      });
+      setWeightFormData(newWeightFormData);
+    } else {
+      // Si no existen datos, se carga el formulario vacío
+      setWeightFormData(emptyWeightForm);
+    }
   };
 
   const handleExtractRequirements = async () => {
@@ -476,46 +542,138 @@ export default function NeedDetails() {
             No requirements found for this need
           </p>
         ) : (
-          requirements.map((requirement) => (
-            <div
-              key={requirement.requerimientoid}
-              className="p-4 rounded-lg border bg-card text-card-foreground"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-medium">
-                    {requirement.nombrerequerimiento}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Code: {requirement.codigorequerimiento}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Created:{" "}
-                    {new Date(requirement.fechacreacion).toLocaleDateString()}
-                  </p>
-                  {requirement.cuerpo && (
-                    <p className="text-sm mt-2">{requirement.cuerpo}</p>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  {!requirementPuntosFuncion[requirement.requerimientoid] && (
+          requirements.map((requirement) => {
+            // Verifica si existen puntos de función para este requerimiento
+            const hasFunctionPoints = requirementPuntosFuncion.some(
+              (pf) => pf.requerimientoid === requirement.requerimientoid
+            );
+
+            return (
+              <div
+                key={requirement.requerimientoid}
+                className="p-4 rounded-lg border bg-card text-card-foreground"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium">
+                      {requirement.nombrerequerimiento}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Code: {requirement.codigorequerimiento}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Created:{" "}
+                      {new Date(requirement.fechacreacion).toLocaleDateString()}
+                    </p>
+                    {requirement.cuerpo && (
+                      <p className="text-sm mt-2">{requirement.cuerpo}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {/* Solo muestra "Generate Weights" si NO hay puntos de función */}
+                    {!hasFunctionPoints && (
+                      <Sheet>
+                        <SheetTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRequirement(requirement);
+                              handleGenerateWeights(requirement);
+                            }}
+                          >
+                            Generate Weights
+                          </Button>
+                        </SheetTrigger>
+                        <SheetContent>
+                          <SheetHeader>
+                            <SheetTitle>
+                              Weights for{" "}
+                              {selectedRequirement?.nombrerequerimiento}
+                            </SheetTitle>
+                          </SheetHeader>
+                          <WeightsForm
+                            weightFormData={weightFormData}
+                            onWeightChange={(key, value) =>
+                              setWeightFormData((prev) => ({
+                                ...prev,
+                                [key]: value,
+                              }))
+                            }
+                            onSave={async () => {
+                              setSaveLoading(true);
+                              try {
+                                const tipoElementoMap: Record<string, number> =
+                                  {
+                                    Tablas: 1,
+                                    "Triggers/SP": 2,
+                                    "Interfaces c/aplicativos": 3,
+                                    Formularios: 4,
+                                    "Subrutinas complejas": 5,
+                                    "Interfaces con BD": 6,
+                                    Reportes: 7,
+                                    Componentes: 8,
+                                    Javascript: 9,
+                                    "Componentes Config. y Pruebas": 10,
+                                    "Despliegue app movil": 11,
+                                    QA: 12,
+                                    PF: 13,
+                                  };
+
+                                const { error } = await supabase
+                                  .from("punto_funcion")
+                                  .insert(
+                                    Object.entries(weightFormData).map(
+                                      ([key, value]) => ({
+                                        cantidad_estimada: value,
+                                        tipo_elemento_afectado_id:
+                                          tipoElementoMap[key],
+                                        requerimientoid:
+                                          selectedRequirement?.requerimientoid,
+                                      })
+                                    )
+                                  );
+
+                                if (error) throw error;
+
+                                toast({
+                                  title: "Success",
+                                  description: "Weights saved successfully",
+                                });
+                                await fetchPuntosFuncion();
+                              } catch (error) {
+                                console.error("Error saving weights:", error);
+                                toast({
+                                  title: "Error",
+                                  description: "Error saving weights",
+                                  variant: "destructive",
+                                });
+                              } finally {
+                                setSaveLoading(false);
+                              }
+                            }}
+                            loading={aiLoading}
+                            saveLoading={saveLoading}
+                          />
+                        </SheetContent>
+                      </Sheet>
+                    )}
+
+                    {/* Botón para abrir el formulario de edición/creación vacío o con datos existentes */}
                     <Sheet>
                       <SheetTrigger asChild>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            setSelectedRequirement(requirement);
-                            handleGenerateWeights(requirement);
-                          }}
+                          onClick={() => handleOpenWeightForm(requirement)}
                         >
-                          Generate Weights
+                          {hasFunctionPoints ? "Edit Form" : "Empty Form"}
                         </Button>
                       </SheetTrigger>
                       <SheetContent>
                         <SheetHeader>
                           <SheetTitle>
-                            Weights for{" "}
+                            {hasFunctionPoints ? "Edit" : "Empty"} Form for{" "}
                             {selectedRequirement?.nombrerequerimiento}
                           </SheetTitle>
                         </SheetHeader>
@@ -551,10 +709,9 @@ export default function NeedDetails() {
                                 .insert(
                                   Object.entries(weightFormData).map(
                                     ([key, value]) => ({
-                                      cantidad_estimada: value,
-                                      tipo_elemento_afectado_id:
-                                        tipoElementoMap[key],
-                                      requerimientoid:
+                                      cantidad_estim: value,
+                                      tipo_elemento: tipoElementoMap[key],
+                                      requerimiento:
                                         selectedRequirement?.requerimientoid,
                                     })
                                   )
@@ -578,117 +735,31 @@ export default function NeedDetails() {
                               setSaveLoading(false);
                             }
                           }}
-                          loading={aiLoading}
+                          loading={false}
                           saveLoading={saveLoading}
                         />
                       </SheetContent>
                     </Sheet>
-                  )}
-                  <Sheet>
-                    <SheetTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedRequirement(requirement);
-                          handleOpenEmptyForm();
-                        }}
-                      >
-                        {requirementPuntosFuncion[requirement.requerimientoid]
-                          ? "Edit Form"
-                          : "Empty Form"}
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent>
-                      <SheetHeader>
-                        <SheetTitle>
-                          {requirementPuntosFuncion[requirement.requerimientoid]
-                            ? "Edit"
-                            : "Empty"}{" "}
-                          Form for {selectedRequirement?.nombrerequerimiento}
-                        </SheetTitle>
-                      </SheetHeader>
-                      <WeightsForm
-                        weightFormData={weightFormData}
-                        onWeightChange={(key, value) =>
-                          setWeightFormData((prev) => ({
-                            ...prev,
-                            [key]: value,
-                          }))
-                        }
-                        onSave={async () => {
-                          setSaveLoading(true);
-                          try {
-                            const tipoElementoMap: Record<string, number> = {
-                              Tablas: 1,
-                              "Triggers/SP": 2,
-                              "Interfaces c/aplicativos": 3,
-                              Formularios: 4,
-                              "Subrutinas complejas": 5,
-                              "Interfaces con BD": 6,
-                              Reportes: 7,
-                              Componentes: 8,
-                              Javascript: 9,
-                              "Componentes Config. y Pruebas": 10,
-                              "Despliegue app movil": 11,
-                              QA: 12,
-                              PF: 13,
-                            };
 
-                            const { error } = await supabase
-                              .from("punto_funcion")
-                              .insert(
-                                Object.entries(weightFormData).map(
-                                  ([key, value]) => ({
-                                    cantidad_estim: value,
-                                    tipo_elemento: tipoElementoMap[key],
-                                    requerimiento:
-                                      selectedRequirement?.requerimientoid,
-                                  })
-                                )
-                              );
-
-                            if (error) throw error;
-
-                            toast({
-                              title: "Success",
-                              description: "Weights saved successfully",
-                            });
-                            await fetchPuntosFuncion();
-                          } catch (error) {
-                            console.error("Error saving weights:", error);
-                            toast({
-                              title: "Error",
-                              description: "Error saving weights",
-                              variant: "destructive",
-                            });
-                          } finally {
-                            setSaveLoading(false);
-                          }
-                        }}
-                        loading={false}
-                        saveLoading={saveLoading}
-                      />
-                    </SheetContent>
-                  </Sheet>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(requirement)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(requirement.requerimientoid)}
-                  >
-                    Delete
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(requirement)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(requirement.requerimientoid)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
