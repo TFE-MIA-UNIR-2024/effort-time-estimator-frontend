@@ -1,33 +1,40 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Wand2 } from "lucide-react";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   getRequirementsTitles,
-  getRequirementDescription, // Asegúrate de importar la nueva función
+  getRequirementDescription,
+  getRequirementsDetails,
+  DescriptionItem,
 } from "@/lib/openAIMock";
+import { Need, WeightFormData, Requirement } from "@/types/need";
+import { WeightsForm } from "@/components/WeightsForm";
 
-interface Need {
-  necesidadid: number;
-  codigonecesidad: string;
-  nombrenecesidad: string;
-  proyectoid: number;
-  fechacreacion: string;
-  cuerpo: string;
-  url: string;
-}
-
-interface Requirement {
-  requerimientoid: number;
-  codigorequerimiento: string;
-  nombrerequerimiento: string;
-  necesidadid: number;
-  tiporequerimientoid: number;
-  fechacreacion: string;
-  cuerpo: string;
-}
+const emptyWeightForm: WeightFormData = {
+  tablas: 0,
+  triggersSP: 0,
+  interfacesAplicativos: 0,
+  formularios: 0,
+  subrutinasComplejas: 0,
+  interfacesBD: 0,
+  reportes: 0,
+  componentes: 0,
+  javascript: 0,
+  componentesConfigPruebas: 0,
+  despliegueAppMovil: 0,
+  qa: 0,
+  pf: 0
+};
 
 export default function NeedDetails() {
   const navigate = useNavigate();
@@ -45,7 +52,11 @@ export default function NeedDetails() {
     cuerpo: "",
   });
   const [aiLoading, setAiLoading] = useState(false);
-  const [progress, setProgress] = useState<number>(0); // Nuevo estado para el progreso
+  const [progress, setProgress] = useState<number>(0);
+  const [weightFormData, setWeightFormData] =
+    useState<WeightFormData>(emptyWeightForm);
+  const [selectedRequirement, setSelectedRequirement] =
+    useState<Requirement | null>(null);
 
   const fetchNeed = async () => {
     try {
@@ -204,6 +215,43 @@ export default function NeedDetails() {
     });
   };
 
+  const handleGenerateWeights = async (requirement: Requirement) => {
+    setAiLoading(true);
+    try {
+      const details = await getRequirementsDetails(
+        [{ title: requirement.nombrerequerimiento }],
+        requirement.cuerpo || ""
+      );
+      if (details && details.length > 0) {
+        const weights = details[0];
+        setWeightFormData({
+          tablas: weights.tablas,
+          triggersSP: weights.triggersSP,
+          interfacesAplicativos: weights.interfacesAplicativos,
+          formularios: weights.formularios,
+          subrutinasComplejas: weights.subrutinasComplejas,
+          interfacesBD: weights.interfacesBD,
+          reportes: weights.reportes,
+          componentes: weights.componentes,
+          javascript: weights.javascript,
+          componentesConfigPruebas: weights.componentesConfigPruebas,
+          despliegueAppMovil: weights.despliegueAppMovil,
+          qa: weights.qa,
+          pf: weights.pf
+        });
+      }
+    } catch (error) {
+      console.error("Error generating weights:", error);
+      setError("Error generating weights");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleOpenEmptyForm = () => {
+    setWeightFormData(emptyWeightForm);
+  };
+
   const handleExtractRequirements = async () => {
     if (!need?.cuerpo) {
       setError("No text available to extract requirements from");
@@ -212,14 +260,12 @@ export default function NeedDetails() {
 
     setAiLoading(true);
     setError(null);
-    setProgress(0); // Iniciar el progreso
+    setProgress(0);
 
     try {
-      // Paso 1: Obtener los títulos
       const titles = await getRequirementsTitles(need.cuerpo);
-      setProgress(20); // Asumiendo que obtener títulos es el 20% del total
+      setProgress(20);
 
-      // Paso 2: Obtener descripciones para cada título
       const descriptions: DescriptionItem[] = [];
       const totalTitles = titles.length;
       for (let i = 0; i < totalTitles; i++) {
@@ -232,10 +278,9 @@ export default function NeedDetails() {
           titulo: item.title,
           description,
         });
-        setProgress(20 + Math.round(((i + 1) / totalTitles) * 80)); // Actualizar el progreso
+        setProgress(20 + Math.round(((i + 1) / totalTitles) * 80));
       }
 
-      // Crear nuevos requerimientos a partir de los resultados de la IA
       const newRequirements = descriptions.map((item, index) => ({
         codigorequerimiento: `REQ-${String(index + 1).padStart(3, "0")}`,
         nombrerequerimiento: item.titulo,
@@ -245,22 +290,20 @@ export default function NeedDetails() {
         fechacreacion: new Date().toISOString(),
       }));
 
-      // Insertar todos los nuevos requerimientos
       const { error } = await supabase
         .from("requerimiento")
         .insert(newRequirements);
       if (error) throw error;
 
-      // Actualizar la lista de requerimientos
       await fetchRequirements();
-      setProgress(100); // Progreso completo
+      setProgress(100);
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Error extracting requirements"
       );
     } finally {
       setAiLoading(false);
-      setTimeout(() => setProgress(0), 1000); // Resetear el progreso después de un segundo
+      setTimeout(() => setProgress(0), 1000);
     }
   };
 
@@ -322,7 +365,6 @@ export default function NeedDetails() {
         </div>
       </div>
 
-      {/* Barra de Progreso */}
       {aiLoading && (
         <div className="mb-4">
           <div className="w-full bg-gray-200 rounded-full h-4">
@@ -427,6 +469,69 @@ export default function NeedDetails() {
                   )}
                 </div>
                 <div className="flex gap-2">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedRequirement(requirement);
+                          handleGenerateWeights(requirement);
+                        }}
+                      >
+                        Generate Weights
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                      <SheetHeader>
+                        <SheetTitle>
+                          Weights for {selectedRequirement?.nombrerequerimiento}
+                        </SheetTitle>
+                      </SheetHeader>
+                      <WeightsForm
+                        weightFormData={weightFormData}
+                        onWeightChange={(key, value) =>
+                          setWeightFormData((prev) => ({
+                            ...prev,
+                            [key]: value,
+                          }))
+                        }
+                        loading={aiLoading}
+                      />
+                    </SheetContent>
+                  </Sheet>
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedRequirement(requirement);
+                          handleOpenEmptyForm();
+                        }}
+                      >
+                        Empty Form
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                      <SheetHeader>
+                        <SheetTitle>
+                          Empty Form for{" "}
+                          {selectedRequirement?.nombrerequerimiento}
+                        </SheetTitle>
+                      </SheetHeader>
+                      <WeightsForm
+                        weightFormData={weightFormData}
+                        onWeightChange={(key, value) =>
+                          setWeightFormData((prev) => ({
+                            ...prev,
+                            [key]: value,
+                          }))
+                        }
+                        loading={false}
+                      />
+                    </SheetContent>
+                  </Sheet>
                   <Button
                     variant="outline"
                     size="sm"

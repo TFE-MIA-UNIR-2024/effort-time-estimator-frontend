@@ -83,17 +83,19 @@ export interface TitleItem {
 export interface DetailItem {
   titulo: string;
   description: string;
-  tablasListas: number;
+  tablas: number;
   triggersSP: number;
-  interfacesCApp: number;
-  formulariosVentanas: number;
-  workflowsAlertas: number;
+  interfacesAplicativos: number;
+  formularios: number;
+  subrutinasComplejas: number;
   interfacesBD: number;
   reportes: number;
   componentes: number;
   javascript: number;
   componentesConfigPruebas: number;
   despliegueAppMovil: number;
+  qa: number;
+  pf: number;
 }
 
 export async function getRequirementsDetails(
@@ -108,31 +110,35 @@ export async function getRequirementsDetails(
     {
       "titulo": "Nombre del título",
       "description": "Descripción detallada del título",
-      "tablasListas": <peso fibonacci>,
-      "triggersSP": <peso fibonacci>,
-      "interfacesCApp": <peso fibonacci>,
-      "formulariosVentanas": <peso fibonacci>,
-      "workflowsAlertas": <peso fibonacci>,
-      "interfacesBD": <peso fibonacci>,
-      "reportes": <peso fibonacci>,
-      "componentes": <peso fibonacci>,
-      "javascript": <peso fibonacci>,
-      "componentesConfigPruebas": <peso fibonacci>,
-      "despliegueAppMovil": <peso fibonacci>
+      "tablas": <cantidad>,
+      "triggersSP": <cantidad>,
+      "interfacesAplicativos": <cantidad>,
+      "formularios": <cantidad>,
+      "subrutinasComplejas": <cantidad>,
+      "interfacesBD": <cantidad>,
+      "reportes": <cantidad>,
+      "componentes": <cantidad>,
+      "javascript": <cantidad>,
+      "componentesConfigPruebas": <cantidad>,
+      "despliegueAppMovil": <cantidad>,
+      "qa": <cantidad>,
+      "pf": <cantidad>
     }
 
     Donde cada uno de los siguientes campos:
-      tablasListas,
+      tablas,
       triggersSP,
-      interfacesCApp,
-      formulariosVentanas,
-      workflowsAlertas,
+      interfacesAplicativos,
+      formularios,
+      subrutinasComplejas,
       interfacesBD,
       reportes,
       componentes,
       javascript,
       componentesConfigPruebas,
-      despliegueAppMovil
+      despliegueAppMovil,
+      qa,
+      pf
 
     Debe ser un **número entero** que represente la cantidad de veces que necesitara desarrollar cada uno
     de esos siguientes tipos de campos. Asigna estos valores de acuerdo con la
@@ -175,36 +181,34 @@ export async function getRequirementsDetails(
                 items: {
                   type: "object",
                   properties: {
-                    titulo: { type: "string" },
-                    description: { type: "string" },
-                    tablasListas: { type: "integer" },
+                    tablas: { type: "integer" },
                     triggersSP: { type: "integer" },
-                    interfacesCApp: { type: "integer" },
-                    formulariosVentanas: { type: "integer" },
-                    workflowsAlertas: { type: "integer" },
+                    interfacesAplicativos: { type: "integer" },
+                    formularios: { type: "integer" },
+                    subrutinasComplejas: { type: "integer" },
                     interfacesBD: { type: "integer" },
                     reportes: { type: "integer" },
                     componentes: { type: "integer" },
                     javascript: { type: "integer" },
                     componentesConfigPruebas: { type: "integer" },
                     despliegueAppMovil: { type: "integer" },
+                    qa: { type: "integer" },
+                    pf: { type: "integer" },
                   },
                   required: [
-                    "titulo",
-                    "description",
-                    "difficulty",
-                    "technologies",
-                    "tablasListas",
+                    "tablas",
                     "triggersSP",
-                    "interfacesCApp",
-                    "formulariosVentanas",
-                    "workflowsAlertas",
+                    "interfacesAplicativos",
+                    "formularios",
+                    "subrutinasComplejas",
                     "interfacesBD",
                     "reportes",
                     "componentes",
                     "javascript",
                     "componentesConfigPruebas",
                     "despliegueAppMovil",
+                    "qa",
+                    "pf",
                   ],
                   additionalProperties: false,
                 },
@@ -220,10 +224,13 @@ export async function getRequirementsDetails(
   });
 
   if (!response.ok) {
+    const errorData = await response.json();
+    console.log(errorData);
     throw new Error(`Error en la API de OpenAI: ${response.statusText}`);
   }
 
   const data = await response.json();
+  console.log(data);
 
   // Asegúrate de que la respuesta contenga el contenido esperado
   if (

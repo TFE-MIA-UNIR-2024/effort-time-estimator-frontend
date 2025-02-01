@@ -116,12 +116,11 @@ export function NeedsList({ projectId, onClose }: NeedsListProps) {
       }
 
       const sanitizeText = (text: string) => {
-        if (typeof text !== "string") return text; // Asegurarse de que sea un string
-        return text.split("\x00").join(""); // Eliminar caracteres nulos
+        if (typeof text !== "string") return text;
+        return text.split("\x00").join("");
       };
 
-      // Add this before your Supabase update
-      const sanitizedPdfText = sanitizeText(pdfText); // Remove all null characters
+      const sanitizedPdfText = sanitizeText(pdfText);
 
       if (editingNeed) {
         const { error } = await supabase
@@ -153,7 +152,7 @@ export function NeedsList({ projectId, onClose }: NeedsListProps) {
       setFormData({
         codigonecesidad: "",
         nombrenecesidad: "",
-        cuerpo: "",
+        texto: "",
         url: "",
       });
       setSelectedFile(null);
@@ -343,7 +342,13 @@ export function NeedsList({ projectId, onClose }: NeedsListProps) {
                   <p className="text-sm text-muted-foreground">
                     Created: {new Date(need.fechacreacion).toLocaleDateString()}
                   </p>
-                  {need.texto && <p className="text-sm mt-2">{need.texto}</p>}
+                  {need.cuerpo && (
+                    <p className="text-sm mt-2">
+                      {need.cuerpo.length > 200
+                        ? `${need.cuerpo.substring(0, 200)}...`
+                        : need.cuerpo}
+                    </p>
+                  )}
                   {need.url && (
                     <a
                       href={need.url}
