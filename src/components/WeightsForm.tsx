@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { WeightFormData } from "@/types/need";
@@ -10,45 +9,55 @@ interface WeightsFormProps {
   weightFormData: WeightFormData;
   onWeightChange: (key: keyof WeightFormData, value: number) => void;
   onSave?: () => Promise<void>;
+  onGenerateWeights?: () => void;
   loading?: boolean;
   saveLoading?: boolean;
+  hasFunctionPoints?: boolean;
 }
 
 export function WeightsForm({
   weightFormData,
   onWeightChange,
   onSave,
+  onGenerateWeights,
   loading = false,
   saveLoading = false,
+  hasFunctionPoints = false,
 }: WeightsFormProps) {
-  const { parametros, loading: parametrosLoading, error } = useParametrosEstimacion();
-  const [selectedParametro, setSelectedParametro] = useState<number | null>(null);
-
+  const {
+    parametros,
+    loading: parametrosLoading,
+    error,
+  } = useParametrosEstimacion();
   return (
-    <div className="relative">
+    <div className="relative h-[calc(100vh-10rem)] overflow-y-auto pr-4">
       {parametrosLoading && (
         <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       )}
-      <div className="grid grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto pr-4">
+      <div className="grid grid-cols-2 gap-4">
         {parametros.map((parametro) => (
-          <div key={parametro.tipo_parametro_estimacionid} className="space-y-2">
+          <div
+            key={parametro.tipo_parametro_estimacionid}
+            className="space-y-2"
+          >
             <label className="text-sm font-medium">{parametro.nombre}</label>
-            <Select
-              defaultValue=""
-              onChange={(e) => setSelectedParametro(parseInt(e.target.value))}
-            >
-              <option value="" disabled>Seleccione un parámetro</option>
+            <Select defaultValue="">
+              <option value="" disabled>
+                Seleccione un parámetro
+              </option>
               {parametro.parametro_estimacion.map((pe) => (
-                <option key={pe.nombre} value={pe.nombre}>{pe.nombre}</option>
+                <option key={pe.nombre} value={pe.nombre}>
+                  {pe.nombre}
+                </option>
               ))}
             </Select>
           </div>
         ))}
       </div>
       <h2 className="text-lg font-medium mt-4">Elementos afectados</h2>
-      <div className="grid grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto pr-4">
+      <div className="grid grid-cols-2 gap-4">
         {Object.entries(weightFormData).map(([key, value]) => (
           <div key={key} className="space-y-2">
             <label className="text-sm font-medium">{key}</label>
@@ -65,7 +74,23 @@ export function WeightsForm({
           </div>
         ))}
       </div>
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex justify-end gap-2">
+        {!hasFunctionPoints && onGenerateWeights && (
+          <Button
+            variant="outline"
+            onClick={onGenerateWeights}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              "Estimar esfuerzos con IA"
+            )}
+          </Button>
+        )}
         <Button onClick={onSave} disabled={loading || saveLoading}>
           {saveLoading ? (
             <>
@@ -77,11 +102,7 @@ export function WeightsForm({
           )}
         </Button>
       </div>
-      {error && (
-        <div className="text-red-500 mt-4">
-          {error}
-        </div>
-      )}
+      {error && <div className="text-red-500 mt-4">{error}</div>}
     </div>
   );
 }

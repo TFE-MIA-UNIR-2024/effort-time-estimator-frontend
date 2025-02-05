@@ -378,15 +378,16 @@ export default function NeedDetails() {
                 requirement={requirement as RequirementWithId}
                 hasFunctionPoints={hasFunctionPoints}
                 weightFormData={state.weightFormData}
-                aiLoading={state.aiLoading}
                 saveLoading={state.saveLoading}
-                onGenerateWeights={() => {
-                  setState((prev) => ({
-                    ...prev,
-                    selectedRequirement: requirement,
-                  }));
-                  handleGenerateWeights(requirement as RequirementWithId);
-                }}
+                puntosFuncion={state.requirementPuntosFuncion
+                  .filter((pf) => pf.requerimientoid === requirement.requerimientoid)
+                  .map((pf) => ({
+                    cantidad_estimada: pf.cantidad_estimada || pf.cantidad_estim || 0,
+                    tipo_elemento_afectado_id: pf.tipo_elemento_afectado_id,
+                    cantidad_real: pf.cantidad_real
+                  }))
+                }
+                onGenerateWeights={() => handleGenerateWeights(requirement as RequirementWithId)}
                 onWeightChange={(key: string, value: number) =>
                   setState((prev) => ({
                     ...prev,
@@ -396,6 +397,26 @@ export default function NeedDetails() {
                     },
                   }))
                 }
+                onSaveRealWeights={async (weights) => {
+                  setState((prev) => ({ ...prev, saveLoading: true }));
+                  try {
+                    await api.saveRealPuntosFuncion(weights, requirement.requerimientoid);
+                    toast({
+                      title: "Success",
+                      description: "Real quantities saved successfully",
+                    });
+                    await fetchData();
+                  } catch (error) {
+                    console.error("Error saving real quantities:", error);
+                    toast({
+                      title: "Error",
+                      description: "Error saving real quantities",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setState((prev) => ({ ...prev, saveLoading: false }));
+                  }
+                }}
                 onSaveWeights={async () => {
                   setState((prev) => ({ ...prev, saveLoading: true }));
                   try {

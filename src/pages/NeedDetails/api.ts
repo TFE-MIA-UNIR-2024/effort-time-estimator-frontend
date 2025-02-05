@@ -76,26 +76,26 @@ export const deleteRequirement = async (requirementId: number) => {
   if (error) throw error;
 };
 
+export const tipoElementoMap: Record<string, number> = {
+  Tablas: 1,
+  "Triggers/SP": 2,
+  "Interfaces c/aplicativos": 3,
+  Formularios: 4,
+  "Subrutinas complejas": 5,
+  "Interfaces con BD": 6,
+  Reportes: 7,
+  Componentes: 8,
+  Javascript: 9,
+  "Componentes Config. y Pruebas": 10,
+  "Despliegue app movil": 11,
+  QA: 12,
+  PF: 13,
+};
+
 export const savePuntosFuncion = async (
   weightFormData: Record<string, number>,
   requirementId: number
 ) => {
-  const tipoElementoMap: Record<string, number> = {
-    Tablas: 1,
-    "Triggers/SP": 2,
-    "Interfaces c/aplicativos": 3,
-    Formularios: 4,
-    "Subrutinas complejas": 5,
-    "Interfaces con BD": 6,
-    Reportes: 7,
-    Componentes: 8,
-    Javascript: 9,
-    "Componentes Config. y Pruebas": 10,
-    "Despliegue app movil": 11,
-    QA: 12,
-    PF: 13,
-  };
-
   const { error } = await supabase
     .from("punto_funcion")
     .insert(
@@ -107,4 +107,19 @@ export const savePuntosFuncion = async (
     );
 
   if (error) throw error;
+};
+
+export const saveRealPuntosFuncion = async (
+  weights: Array<{ cantidad_real: number; tipo_elemento_afectado_id: number }>,
+  requirementId: number
+) => {
+  for (const weight of weights) {
+    const { error } = await supabase
+      .from("punto_funcion")
+      .update({ cantidad_real: weight.cantidad_real })
+      .eq("requerimientoid", requirementId)
+      .eq("tipo_elemento_afectado_id", weight.tipo_elemento_afectado_id);
+
+    if (error) throw error;
+  }
 };

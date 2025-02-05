@@ -20,6 +20,8 @@ interface WeightFormSheetProps {
   onWeightChange: (key: string, value: number) => void;
   onSave: () => Promise<void>;
   onButtonClick?: () => void;
+  onGenerateWeights?: () => void;
+  hasFunctionPoints?: boolean;
 }
 
 export function WeightFormSheet({
@@ -32,6 +34,8 @@ export function WeightFormSheet({
   onWeightChange,
   onSave,
   onButtonClick,
+  onGenerateWeights,
+  hasFunctionPoints,
 }: WeightFormSheetProps) {
   return (
     <Sheet>
@@ -56,6 +60,8 @@ export function WeightFormSheet({
           onSave={onSave}
           loading={loading}
           saveLoading={saveLoading}
+          onGenerateWeights={onGenerateWeights}
+          hasFunctionPoints={hasFunctionPoints}
         />
       </SheetContent>
     </Sheet>

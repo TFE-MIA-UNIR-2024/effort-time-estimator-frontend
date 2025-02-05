@@ -1,18 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { RequirementWithId } from "../componentTypes";
 import { WeightFormSheet } from "./WeightFormSheet";
+import { WeightRealFormSheet } from "./WeightRealFormSheet";
 import { WeightFormData } from "@/types/need";
 
 interface RequirementCardProps {
   requirement: RequirementWithId;
   hasFunctionPoints: boolean;
   weightFormData: WeightFormData;
-  aiLoading: boolean;
   saveLoading: boolean;
-  onGenerateWeights: () => void;
+  puntosFuncion: Array<{
+    cantidad_estimada: number;
+    tipo_elemento_afectado_id: number;
+  }>;
   onWeightChange: (key: string, value: number) => void;
   onSaveWeights: () => Promise<void>;
   onOpenWeightForm: () => void;
+  onGenerateWeights: () => void;
+  onSaveRealWeights: (data: Array<{ cantidad_real: number; tipo_elemento_afectado_id: number }>) => Promise<void>;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -21,14 +26,15 @@ export function RequirementCard({
   requirement,
   hasFunctionPoints,
   weightFormData,
-  aiLoading,
   saveLoading,
-  onGenerateWeights,
   onWeightChange,
   onSaveWeights,
   onOpenWeightForm,
+  onGenerateWeights,
+  onSaveRealWeights,
   onEdit,
   onDelete,
+  puntosFuncion,
 }: RequirementCardProps) {
   return (
     <div className="p-4 rounded-lg border bg-card text-card-foreground">
@@ -49,31 +55,31 @@ export function RequirementCard({
           )}
         </div>
         <div className="flex gap-2">
-          {!hasFunctionPoints && (
+          <>
             <WeightFormSheet
-              title="Weights for"
-              buttonText="Generate Weights"
+              title={hasFunctionPoints ? "Edit Form for" : "Empty Form for"}
+              buttonText={hasFunctionPoints ? "Edit Form" : "Empty Form"}
               requirement={requirement}
               weightFormData={weightFormData}
-              loading={aiLoading}
+              loading={false}
               saveLoading={saveLoading}
               onWeightChange={onWeightChange}
               onSave={onSaveWeights}
-              onButtonClick={onGenerateWeights}
+              onButtonClick={onOpenWeightForm}
+              onGenerateWeights={onGenerateWeights}
+              hasFunctionPoints={hasFunctionPoints}
             />
-          )}
-
-          <WeightFormSheet
-            title={hasFunctionPoints ? "Edit Form for" : "Empty Form for"}
-            buttonText={hasFunctionPoints ? "Edit Form" : "Empty Form"}
-            requirement={requirement}
-            weightFormData={weightFormData}
-            loading={false}
-            saveLoading={saveLoading}
-            onWeightChange={onWeightChange}
-            onSave={onSaveWeights}
-            onButtonClick={onOpenWeightForm}
-          />
+            {hasFunctionPoints && (
+              <WeightRealFormSheet
+                title="Cantidad Real for"
+                buttonText="Añadir cantidad real"
+                requirement={requirement}
+                puntosFuncion={puntosFuncion}
+                loading={saveLoading}
+                onSave={onSaveRealWeights}
+              />
+            )}
+          </>
 
           <Button
             variant="outline"

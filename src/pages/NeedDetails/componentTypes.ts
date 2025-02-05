@@ -1,10 +1,11 @@
-import { Need, Requirement } from "@/types/need";
+import { Requirement } from "@/types/need";
 
 export interface PuntoFuncion {
   requerimientoid: number;
   tipo_elemento_afectado_id: number;
   cantidad_estimada?: number;
   cantidad_estim?: number;
+  cantidad_real?: number;
   tipo_elemento_afectado?: {
     activo: boolean;
   };
