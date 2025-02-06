@@ -431,8 +431,10 @@ export default function NeedDetails() {
                 onSaveRealWeights={async (weights) => {
                   setState((prev) => ({ ...prev, saveLoading: true }));
                   try {
+                    console.log("weights", weights);
+
                     await api.saveRealPuntosFuncion(
-                      weights,
+                      weights.filter((w) => w.cantidad_real > 0),
                       requirement.requerimientoid
                     );
                     toast({

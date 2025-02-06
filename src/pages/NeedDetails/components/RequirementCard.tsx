@@ -3,7 +3,6 @@ import { RequirementWithId } from "../componentTypes";
 import { WeightFormSheet } from "./WeightFormSheet";
 import { WeightRealFormSheet } from "./WeightRealFormSheet";
 import { WeightFormData } from "@/types/need";
-import { NeedDetailsState } from "../types";
 
 interface RequirementCardProps {
   requirement: RequirementWithId;
