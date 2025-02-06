@@ -18,10 +18,19 @@ interface WeightFormSheetProps {
   loading: boolean;
   saveLoading: boolean;
   onWeightChange: (key: string, value: number) => void;
+  onParameterChange: (
+    parametro_estimacionid: number,
+    valor_parametro_estimacionid: number
+  ) => void;
   onSave: () => Promise<void>;
   onButtonClick?: () => void;
   onGenerateWeights?: () => void;
   hasFunctionPoints?: boolean;
+  puntosFuncion?: Array<{
+    parametro_estimacionid?: number;
+    valor_parametro_estimacionid?: number;
+  }>;
+  selectedParameters: Record<number, number>;
 }
 
 export function WeightFormSheet({
@@ -32,19 +41,18 @@ export function WeightFormSheet({
   loading,
   saveLoading,
   onWeightChange,
+  onParameterChange,
   onSave,
   onButtonClick,
   onGenerateWeights,
   hasFunctionPoints,
+  puntosFuncion,
+  selectedParameters,
 }: WeightFormSheetProps) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onButtonClick}
-        >
+        <Button variant="outline" size="sm" onClick={onButtonClick}>
           {buttonText}
         </Button>
       </SheetTrigger>
@@ -57,11 +65,15 @@ export function WeightFormSheet({
         <WeightsForm
           weightFormData={weightFormData}
           onWeightChange={onWeightChange}
+          onParameterChange={onParameterChange}
           onSave={onSave}
           loading={loading}
           saveLoading={saveLoading}
           onGenerateWeights={onGenerateWeights}
           hasFunctionPoints={hasFunctionPoints}
+          requirement={requirement}
+          puntosFuncion={puntosFuncion}
+          selectedParameters={selectedParameters}
         />
       </SheetContent>
     </Sheet>

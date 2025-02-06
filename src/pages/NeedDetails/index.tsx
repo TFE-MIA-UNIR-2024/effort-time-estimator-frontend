@@ -33,6 +33,7 @@ export default function NeedDetails() {
     selectedRequirement: null,
     requirementPuntosFuncion: [],
     saveLoading: false,
+    selectedParameters: {} as Record<number, number>,
   });
 
   const fetchData = async () => {
@@ -190,7 +191,11 @@ export default function NeedDetails() {
   };
 
   const handleOpenWeightForm = (requirement: RequirementWithId) => {
-    setState((prev) => ({ ...prev, selectedRequirement: requirement }));
+    setState((prev) => ({
+      ...prev,
+      selectedRequirement: requirement,
+      selectedParameters: {}, // Reset selected parameters
+    }));
     const existingPoints = state.requirementPuntosFuncion.filter(
       (pf) => pf.requerimientoid === requirement.requerimientoid
     );
@@ -241,9 +246,28 @@ export default function NeedDetails() {
             break;
         }
       });
-      setState((prev) => ({ ...prev, weightFormData: newWeightFormData }));
+      // Initialize selected parameters from existing values
+      const selectedParams: Record<number, number> = {};
+      existingPoints.forEach((pf) => {
+        console.log(pf);
+        if (pf.parametro_estimacionid) {
+          selectedParams[pf.parametro_estimacionid] = pf.parametro_estimacionid;
+        }
+      });
+
+      console.log(selectedParams);
+
+      setState((prev) => ({
+        ...prev,
+        weightFormData: newWeightFormData,
+        selectedParameters: selectedParams,
+      }));
     } else {
-      setState((prev) => ({ ...prev, weightFormData: emptyWeightForm }));
+      setState((prev) => ({
+        ...prev,
+        weightFormData: emptyWeightForm,
+        selectedParameters: {},
+      }));
     }
   };
 
@@ -379,15 +403,22 @@ export default function NeedDetails() {
                 hasFunctionPoints={hasFunctionPoints}
                 weightFormData={state.weightFormData}
                 saveLoading={state.saveLoading}
+                selectedParameters={state.selectedParameters}
                 puntosFuncion={state.requirementPuntosFuncion
-                  .filter((pf) => pf.requerimientoid === requirement.requerimientoid)
+                  .filter(
+                    (pf) => pf.requerimientoid === requirement.requerimientoid
+                  )
                   .map((pf) => ({
-                    cantidad_estimada: pf.cantidad_estimada || pf.cantidad_estim || 0,
+                    cantidad_estimada:
+                      pf.cantidad_estimada || pf.cantidad_estim || 0,
                     tipo_elemento_afectado_id: pf.tipo_elemento_afectado_id,
-                    cantidad_real: pf.cantidad_real
-                  }))
+                    cantidad_real: pf.cantidad_real,
+                    parametro_estimacionid: pf.parametro_estimacionid,
+                    valor_parametro_estimacionid: pf.parametro_estimacionid,
+                  }))}
+                onGenerateWeights={() =>
+                  handleGenerateWeights(requirement as RequirementWithId)
                 }
-                onGenerateWeights={() => handleGenerateWeights(requirement as RequirementWithId)}
                 onWeightChange={(key: string, value: number) =>
                   setState((prev) => ({
                     ...prev,
@@ -400,7 +431,10 @@ export default function NeedDetails() {
                 onSaveRealWeights={async (weights) => {
                   setState((prev) => ({ ...prev, saveLoading: true }));
                   try {
-                    await api.saveRealPuntosFuncion(weights, requirement.requerimientoid);
+                    await api.saveRealPuntosFuncion(
+                      weights,
+                      requirement.requerimientoid
+                    );
                     toast({
                       title: "Success",
                       description: "Real quantities saved successfully",
@@ -417,6 +451,23 @@ export default function NeedDetails() {
                     setState((prev) => ({ ...prev, saveLoading: false }));
                   }
                 }}
+                onParameterChange={(
+                  parametro_estimacionid,
+                  valor_parametro_estimacionid
+                ) => {
+                  console.log(
+                    parametro_estimacionid,
+                    valor_parametro_estimacionid
+                  );
+
+                  setState((prev) => ({
+                    ...prev,
+                    selectedParameters: {
+                      ...prev.selectedParameters,
+                      [parametro_estimacionid]: valor_parametro_estimacionid,
+                    },
+                  }));
+                }}
                 onSaveWeights={async () => {
                   setState((prev) => ({ ...prev, saveLoading: true }));
                   try {
@@ -425,7 +476,8 @@ export default function NeedDetails() {
                     }
                     await api.savePuntosFuncion(
                       state.weightFormData as unknown as Record<string, number>,
-                      state.selectedRequirement.requerimientoid
+                      state.selectedRequirement.requerimientoid,
+                      state.selectedParameters
                     );
                     toast({
                       title: "Success",

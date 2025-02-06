@@ -9,6 +9,12 @@ export interface PuntoFuncion {
   tipo_elemento_afectado?: {
     activo: boolean;
   };
+  tipo_parametro_estimacionid?: number;
+  parametro_estimacionid?: number;
+  parametro_estimacion?: {
+    nombre: string;
+    parametro_estimacionid: number;
+  };
 }
 
 export interface RequirementWithId extends Requirement {

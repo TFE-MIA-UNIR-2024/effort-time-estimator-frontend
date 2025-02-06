@@ -37,4 +37,5 @@ export interface NeedDetailsState {
   selectedRequirement: Requirement | null;
   requirementPuntosFuncion: PuntoFuncion[];
   saveLoading: boolean;
+  selectedParameters: Record<number, number>;
 }
