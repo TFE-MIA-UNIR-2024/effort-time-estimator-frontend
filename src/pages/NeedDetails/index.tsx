@@ -251,11 +251,11 @@ export default function NeedDetails() {
       existingPoints.forEach((pf) => {
         console.log(pf);
         if (pf.parametro_estimacionid) {
-          selectedParams[pf.parametro_estimacionid] = pf.parametro_estimacionid;
+          console.log(pf);
+          selectedParams[pf.parametro_estimacion?.tipo_parametro_estimacionid] =
+            pf.parametro_estimacionid;
         }
       });
-
-      console.log(selectedParams);
 
       setState((prev) => ({
         ...prev,

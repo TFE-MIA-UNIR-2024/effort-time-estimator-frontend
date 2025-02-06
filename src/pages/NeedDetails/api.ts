@@ -121,6 +121,8 @@ export const savePuntosFuncion = async (
 
   records.push(...recordsWithParams);
 
+  console.log("records", records);
+
   const { error: insertError } = await supabase
     .from("punto_funcion")
     .insert(records);
