@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
-import { EstimationsModal } from "@/components/EstimationsModal";
+import { EstimationsModal } from "./EstimationsModal";
 
 interface Need {
   necesidadid: number;
@@ -246,12 +246,6 @@ export function NeedsList({ projectId, onClose }: NeedsListProps) {
           </Button>
         </div>
       </div>
-
-      <EstimationsModal
-        isOpen={showEstimations}
-        onClose={() => setShowEstimations(false)}
-        projectId={projectId}
-      />
 
       {error && (
         <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
