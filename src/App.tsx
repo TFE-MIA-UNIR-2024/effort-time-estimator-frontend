@@ -11,11 +11,12 @@ import ProjectDetails from "./pages/ProjectDetails";
 import NeedDetails from "./pages/NeedDetails";
 import { Layout } from "./components/Layout";
 import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 function App() {
   return (
-    <>
-      <Router>
+    <Router>
+      <TooltipProvider>
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/login" element={<Login />} />
@@ -46,9 +47,9 @@ function App() {
           />
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
-      </Router>
+      </TooltipProvider>
       <Toaster />
-    </>
+    </Router>
   );
 }
 
