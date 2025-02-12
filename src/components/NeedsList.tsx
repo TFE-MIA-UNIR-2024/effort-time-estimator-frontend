@@ -5,6 +5,14 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { extractTextFromPDF } from "@/lib/pdfUtils";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
+import { EstimationsModal } from "@/components/EstimationsModal";
 
 interface Need {
   necesidadid: number;
@@ -36,6 +44,7 @@ export function NeedsList({ projectId, onClose }: NeedsListProps) {
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileLoading, setFileLoading] = useState(false);
+  const [showEstimations, setShowEstimations] = useState(false);
 
   const fetchNeeds = async () => {
     try {
@@ -238,6 +247,12 @@ export function NeedsList({ projectId, onClose }: NeedsListProps) {
         </div>
       </div>
 
+      <EstimationsModal
+        isOpen={showEstimations}
+        onClose={() => setShowEstimations(false)}
+        projectId={projectId}
+      />
+
       {error && (
         <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
           {error}
@@ -370,20 +385,24 @@ export function NeedsList({ projectId, onClose }: NeedsListProps) {
                   >
                     View Details
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(need)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(need.necesidadid)}
-                  >
-                    Delete
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEdit(need)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(need.necesidadid)}
+                        className="text-destructive"
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>

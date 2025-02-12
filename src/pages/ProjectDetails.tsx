@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { NeedsList } from "@/components/NeedsList";
 import { ArrowLeft } from "lucide-react";
+import { EstimationsModal } from "@/components/EstimationsModal";
 
 interface Project {
   proyectoid: number;
@@ -16,6 +17,7 @@ export default function ProjectDetails() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showEstimations, setShowEstimations] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -33,7 +35,9 @@ export default function ProjectDetails() {
 
         setProject(data);
       } catch (error) {
-        setError(error instanceof Error ? error.message : "Error fetching project");
+        setError(
+          error instanceof Error ? error.message : "Error fetching project"
+        );
       } finally {
         setLoading(false);
       }
@@ -69,23 +73,33 @@ export default function ProjectDetails() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-4"
-          onClick={() => navigate(-1)}
-        >
+    <div className="flex flex-col h-[calc(100vh-4rem)]">
+      <div className="flex items-center gap-4 p-4 border-b bg-background sticky top-0 z-10">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
         <h1 className="text-3xl font-bold">{project.nombreproyecto}</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowEstimations(true)}
+        >
+          Estimations
+        </Button>
       </div>
 
-      <div className="rounded-lg border bg-card">
-        <NeedsList projectId={project.proyectoid} onClose={() => {}} />
+      <div className="flex-1 overflow-auto p-4">
+        <div className="rounded-lg border bg-card">
+          <NeedsList projectId={project.proyectoid} onClose={() => {}} />
+        </div>
       </div>
+
+      <EstimationsModal
+        isOpen={showEstimations}
+        onClose={() => setShowEstimations(false)}
+        projectId={project.proyectoid}
+      />
     </div>
   );
 }
