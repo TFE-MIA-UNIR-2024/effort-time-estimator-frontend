@@ -1,6 +1,6 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useFormData } from "@/hooks/useFormData";
+import { useFormData } from "@/hooks/form";
 import DialogContentComponent from "./form/DialogContent";
 
 interface EditFormProps {
