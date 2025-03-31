@@ -91,7 +91,11 @@ const NeedForm = ({ projectId, need, onSuccess, onCancel }: NeedFormProps) => {
                 type="file"
                 accept=".pdf"
                 className="hidden"
-                onChange={(e) => handleFileChange(e, (text) => form.setValue("cuerpo", text))}
+                onChange={(e) => {
+                  handleFileChange(e, (text) => {
+                    form.setValue("cuerpo", text);
+                  });
+                }}
               />
             </label>
           </div>
