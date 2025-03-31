@@ -46,8 +46,11 @@ const NeedForm = ({ projectId, need, onSuccess, onCancel }: NeedFormProps) => {
     onCancel
   });
   
+  // Define the callback function to set form value when text is extracted
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File upload triggered");
     handleFileChange(e, (text: string) => {
+      console.log("Setting form value with extracted text");
       form.setValue("cuerpo", text);
     });
   };

@@ -14,7 +14,7 @@ const FileUploadField = ({ file, isExtracting, onFileChange }: FileUploadFieldPr
     <div className="space-y-2">
       <FormLabel>Documento PDF</FormLabel>
       <div className="border border-input rounded-md px-3 py-2">
-        <label className="flex items-center gap-2 cursor-pointer">
+        <label htmlFor="pdf-upload" className="flex items-center gap-2 cursor-pointer">
           <Button type="button" variant="outline" size="sm" className="gap-2">
             <FileText className="h-4 w-4" />
             {file ? "Cambiar documento" : "Subir documento"}

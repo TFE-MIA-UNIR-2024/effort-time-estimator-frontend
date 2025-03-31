@@ -11,10 +11,16 @@ export const useNeedFileHandler = () => {
     e: React.ChangeEvent<HTMLInputElement>,
     onTextExtracted?: (text: string) => void
   ) => {
+    console.log("handleFileChange called");
     const files = e.target.files;
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+      console.log("No files selected");
+      return;
+    }
 
     const selectedFile = files[0];
+    console.log("File selected:", selectedFile.name);
+    
     if (selectedFile.type !== 'application/pdf') {
       toast({
         title: "Error",
@@ -25,13 +31,13 @@ export const useNeedFileHandler = () => {
     }
 
     setFile(selectedFile);
-    console.log("File selected:", selectedFile.name);
     
     if (onTextExtracted) {
+      console.log("Starting text extraction");
       setIsExtracting(true);
       
       try {
-        console.log("Starting text extraction simulation");
+        console.log("Simulating text extraction from PDF");
         // Simulating text extraction from PDF
         // In a real app, you would use a PDF parsing library or service
         setTimeout(() => {
@@ -41,7 +47,7 @@ Este es un texto de ejemplo simulando la extracción de contenido de un PDF.
 
 El documento contiene información relevante para el proyecto que puede ser editada según sea necesario.`;
           
-          console.log("Text extracted, calling callback");
+          console.log("Text extracted, calling callback with text");
           onTextExtracted(extractedText);
           setIsExtracting(false);
           
@@ -59,6 +65,8 @@ El documento contiene información relevante para el proyecto que puede ser edit
           variant: "destructive",
         });
       }
+    } else {
+      console.log("No text extraction callback provided");
     }
   };
 
