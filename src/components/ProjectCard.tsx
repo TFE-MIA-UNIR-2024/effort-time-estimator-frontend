@@ -5,9 +5,10 @@ import { useNavigate } from "react-router-dom";
 interface ProjectCardProps {
   id: number;
   title: string;
+  onEdit: () => void;
 }
 
-const ProjectCard = ({ id, title }: ProjectCardProps) => {
+const ProjectCard = ({ id, title, onEdit }: ProjectCardProps) => {
   const navigate = useNavigate();
 
   const handleViewDetails = () => {
@@ -22,7 +23,7 @@ const ProjectCard = ({ id, title }: ProjectCardProps) => {
           <Button variant="outline" size="sm" onClick={handleViewDetails}>
             Ver Detalles
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={onEdit}>
             Editar
           </Button>
           <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">

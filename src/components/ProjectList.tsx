@@ -23,6 +23,7 @@ const ProjectList = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
@@ -53,9 +54,15 @@ const ProjectList = () => {
     fetchProjects();
   }, [toast]);
 
-  const handleProjectCreated = () => {
+  const handleProjectSaved = () => {
     setDialogOpen(false);
+    setCurrentProject(null);
     fetchProjects();
+  };
+
+  const handleEditProject = (project: Project) => {
+    setCurrentProject(project);
+    setDialogOpen(true);
   };
 
   return (
@@ -71,11 +78,17 @@ const ProjectList = () => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Crear Nuevo Proyecto</DialogTitle>
+              <DialogTitle>
+                {currentProject ? "Editar Proyecto" : "Crear Nuevo Proyecto"}
+              </DialogTitle>
             </DialogHeader>
             <NewProjectForm 
-              onSuccess={handleProjectCreated} 
-              onCancel={() => setDialogOpen(false)} 
+              project={currentProject}
+              onSuccess={handleProjectSaved} 
+              onCancel={() => {
+                setDialogOpen(false);
+                setCurrentProject(null);
+              }} 
             />
           </DialogContent>
         </Dialog>
@@ -89,7 +102,8 @@ const ProjectList = () => {
             <ProjectCard 
               key={project.proyectoid} 
               id={project.proyectoid} 
-              title={project.nombreproyecto} 
+              title={project.nombreproyecto}
+              onEdit={() => handleEditProject(project)}
             />
           ))}
         </div>

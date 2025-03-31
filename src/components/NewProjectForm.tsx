@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,44 +24,80 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface Project {
+  proyectoid: number;
+  nombreproyecto: string;
+}
+
 interface NewProjectFormProps {
+  project?: Project | null;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-const NewProjectForm = ({ onSuccess, onCancel }: NewProjectFormProps) => {
+const NewProjectForm = ({ project, onSuccess, onCancel }: NewProjectFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const isEditing = !!project;
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nombreproyecto: "",
+      nombreproyecto: project?.nombreproyecto || "",
     },
   });
+
+  // Update form values when project changes
+  useEffect(() => {
+    if (project) {
+      form.reset({
+        nombreproyecto: project.nombreproyecto,
+      });
+    }
+  }, [project, form]);
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from("proyecto")
-        .insert([{ nombreproyecto: values.nombreproyecto }]);
+      if (isEditing && project) {
+        // Update existing project
+        const { error } = await supabase
+          .from("proyecto")
+          .update({ nombreproyecto: values.nombreproyecto })
+          .eq("proyectoid", project.proyectoid);
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
+
+        toast({
+          title: "Proyecto actualizado",
+          description: "El proyecto ha sido actualizado exitosamente",
+        });
+      } else {
+        // Create new project
+        const { error } = await supabase
+          .from("proyecto")
+          .insert([{ nombreproyecto: values.nombreproyecto }]);
+
+        if (error) {
+          throw error;
+        }
+
+        toast({
+          title: "Proyecto creado",
+          description: "El proyecto ha sido creado exitosamente",
+        });
       }
-
-      toast({
-        title: "Proyecto creado",
-        description: "El proyecto ha sido creado exitosamente",
-      });
       
       onSuccess();
     } catch (error) {
-      console.error("Error creating project:", error);
+      console.error("Error saving project:", error);
       toast({
         title: "Error",
-        description: "No se pudo crear el proyecto",
+        description: isEditing 
+          ? "No se pudo actualizar el proyecto" 
+          : "No se pudo crear el proyecto",
         variant: "destructive",
       });
     } finally {
@@ -99,7 +135,9 @@ const NewProjectForm = ({ onSuccess, onCancel }: NewProjectFormProps) => {
             type="submit"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Creando..." : "Crear Proyecto"}
+            {isSubmitting 
+              ? (isEditing ? "Actualizando..." : "Creando...") 
+              : (isEditing ? "Actualizar" : "Crear")}
           </Button>
         </div>
       </form>
