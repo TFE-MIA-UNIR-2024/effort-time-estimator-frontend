@@ -9,135 +9,120 @@ export const useSaveFormData = (
   parametros: Record<number, string>,
   elementos: Record<number, number>,
   parametrosDB: ParametroEstimacion[],
-  getTypeForParameter: (parametroId: number) => number
+  getTypeForParameter: (parametroId: number) => number,
+  getParameterIdByNameAndType: (name: string, typeId: number) => number | null
 ) => {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      console.log("Saving form for requerimiento:", requerimientoId);
-      console.log("Parametros to save:", parametros);
+      console.log("Saving form data for requerimiento:", requerimientoId);
+      console.log("Parameters to save:", parametros);
+      console.log("Elements to save:", elementos);
       
-      // First delete existing records
+      // First, delete existing data for this requerimiento
       const { error: deleteError } = await supabase
         .from('punto_funcion')
         .delete()
         .eq('requerimientoid', requerimientoId);
 
       if (deleteError) throw deleteError;
+      console.log("Deleted existing punto_funcion records");
 
-      const records = [];
+      // Create records for each parameter type (1-6)
+      const parameterEntries = Object.entries(parametros);
+      console.log("Parameter entries to process:", parameterEntries);
+      
+      // Prepare an array to store all inserts
+      const inserts = [];
 
-      // For each parameter type, find the matching parameter in DB or create a new one
-      for (const [paramId, value] of Object.entries(parametros)) {
-        if (value) {
-          // Get the type (1-6) for this parameter
-          const tipo = getTypeForParameter(parseInt(paramId));
-          console.log(`Processing parameter: ${value} with type ${tipo}`);
+      // Process each parameter
+      for (const [typeIdStr, paramName] of parameterEntries) {
+        const typeId = parseInt(typeIdStr);
+        
+        if (!paramName || paramName.trim() === '') {
+          console.log(`Skipping empty parameter for type ${typeId}`);
+          continue;
+        }
+        
+        console.log(`Processing parameter: ${paramName} of type ${typeId}`);
+        
+        // Get the parametro_estimacionid for this name and type
+        let parametroId = getParameterIdByNameAndType(paramName, typeId);
+        
+        if (parametroId === null) {
+          console.log(`Parameter "${paramName}" not found in DB for type ${typeId}, will create it`);
+          const { data: newParam, error: paramInsertError } = await supabase
+            .from('parametro_estimacion')
+            .insert({
+              nombre: paramName,
+              tipo_parametro_estimacionid: typeId,
+              fecha_de_creacion: new Date()
+            })
+            .select('parametro_estimacionid')
+            .single();
           
-          // Find the exact parameter with this name and type
-          const matchingParam = parametrosDB.find(p => 
-            p.nombre === value && 
-            p.tipo_parametro_estimacionid === tipo
-          );
-
-          if (matchingParam) {
-            // Found existing parameter - use it
-            records.push({
-              requerimientoid: requerimientoId,
-              parametro_estimacionid: matchingParam.parametro_estimacionid,
-              cantidad_estimada: 1,
-              tipo_elemento_afectado_id: null
-            });
-            console.log(`Using existing parameter: ${value} with id ${matchingParam.parametro_estimacionid}`);
+          if (paramInsertError) {
+            console.error('Error creating parameter:', paramInsertError);
+            throw paramInsertError;
+          }
+          
+          if (newParam) {
+            parametroId = newParam.parametro_estimacionid;
+            console.log(`Created new parameter with ID: ${parametroId}`);
           } else {
-            console.log(`Could not find matching parameter for ${value} of type ${tipo}, creating new one`);
-            
-            // Insert parameters that don't exist in the DB
-            try {
-              const { data, error } = await supabase
-                .from('parametro_estimacion')
-                .insert({
-                  nombre: value,
-                  tipo_parametro_estimacionid: tipo,
-                  fecha_de_creacion: new Date().toISOString()
-                })
-                .select();
-                
-              if (error) {
-                console.error('Error inserting parameter:', error);
-                // Try to find if the parameter already exists with a different case or trailing spaces
-                const similarParams = parametrosDB.filter(p => 
-                  p.nombre.toLowerCase().trim() === value.toLowerCase().trim() && 
-                  p.tipo_parametro_estimacionid === tipo
-                );
-                
-                if (similarParams.length > 0) {
-                  const param = similarParams[0];
-                  records.push({
-                    requerimientoid: requerimientoId,
-                    parametro_estimacionid: param.parametro_estimacionid,
-                    cantidad_estimada: 1,
-                    tipo_elemento_afectado_id: null
-                  });
-                  console.log(`Used similar parameter: ${param.nombre} with id ${param.parametro_estimacionid}`);
-                } else {
-                  throw error;
-                }
-              } else if (data && data[0]) {
-                records.push({
-                  requerimientoid: requerimientoId,
-                  parametro_estimacionid: data[0].parametro_estimacionid,
-                  cantidad_estimada: 1,
-                  tipo_elemento_afectado_id: null
-                });
-                console.log(`Created new parameter: ${value} with id ${data[0].parametro_estimacionid}`);
-              }
-            } catch (insertError) {
-              console.error('Error inserting parameter:', insertError);
-              // Continue with other parameters even if one fails
-            }
+            console.warn(`Failed to create parameter: ${paramName}`);
+            continue;
           }
         }
+        
+        // Create punto_funcion record for this parameter
+        inserts.push({
+          requerimientoid: requerimientoId,
+          parametro_estimacionid: parametroId,
+          cantidad_estimada: 0  // Default value
+        });
       }
-
-      // For elementos, we already have numeric values
-      for (const [elemId, cantidad] of Object.entries(elementos)) {
-        if (cantidad >= 0) { // Include zero values
-          records.push({
-            requerimientoid: requerimientoId,
-            tipo_elemento_afectado_id: parseInt(elemId),
-            cantidad_estimada: cantidad,
-            parametro_estimacionid: null
-          });
+      
+      // Process each elemento
+      for (const [elementoIdStr, cantidad] of Object.entries(elementos)) {
+        const elementoId = parseInt(elementoIdStr);
+        
+        if (cantidad <= 0) {
+          console.log(`Skipping elemento ${elementoId} with zero or negative quantity`);
+          continue;
         }
+        
+        // Create punto_funcion record for this elemento
+        inserts.push({
+          requerimientoid: requerimientoId,
+          tipo_elemento_afectado_id: elementoId,
+          cantidad_estimada: cantidad
+        });
       }
-
-      if (records.length > 0) {
-        console.log('Saving records:', records);
+      
+      console.log("Records to insert:", inserts);
+      
+      if (inserts.length > 0) {
         const { error: insertError } = await supabase
           .from('punto_funcion')
-          .insert(records);
+          .insert(inserts);
 
-        if (insertError) {
-          console.error('Error inserting records:', insertError);
-          throw insertError;
-        }
+        if (insertError) throw insertError;
+        console.log("Inserted new punto_funcion records");
+      } else {
+        console.log("No records to insert");
       }
 
-      toast({
-        title: "Éxito",
-        description: "Formulario guardado correctamente",
-      });
       return true;
     } catch (error) {
-      console.error('Error saving form:', error);
+      console.error('Error saving form data:', error);
       toast({
         title: "Error",
-        description: "No se pudo guardar el formulario",
-        variant: "destructive",
+        description: "No se pudieron guardar los parámetros.",
+        variant: "destructive"
       });
       return false;
     } finally {

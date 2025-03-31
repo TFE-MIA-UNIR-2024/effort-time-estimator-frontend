@@ -13,7 +13,8 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
     parametrosDB, 
     elementosDB, 
     fetchParametrosYElementos,
-    getTypeForParameter 
+    getTypeForParameter,
+    getParameterIdByNameAndType
   } = useFormParameters();
   
   const {
@@ -28,7 +29,7 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
   const {
     loading: saveLoading,
     handleSave: saveForm
-  } = useSaveFormData(requerimientoId, parametros, elementos, parametrosDB, getTypeForParameter);
+  } = useSaveFormData(requerimientoId, parametros, elementos, parametrosDB, getTypeForParameter, getParameterIdByNameAndType);
 
   const loading = parametersLoading || saveLoading;
 
@@ -111,6 +112,12 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
       }
     } catch (error) {
       console.error('Error fetching existing data:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los datos existentes.",
+        variant: "destructive"
+      });
+      
       // In case of error, still set default values
       const defaultElems: Record<number, number> = {};
       for (let i = 1; i <= 13; i++) {
@@ -149,6 +156,10 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
     const success = await saveForm();
     if (success) {
       setDataExists(true);
+      toast({
+        title: "Éxito",
+        description: "Los parámetros se han guardado correctamente.",
+      });
     }
     return success;
   };

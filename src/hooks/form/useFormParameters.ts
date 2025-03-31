@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -5,6 +6,7 @@ export interface ParametroEstimacion {
   parametro_estimacionid: number;
   nombre: string;
   tipo_parametro_estimacionid: number;
+  descripcion?: string;
 }
 
 export interface TipoElementoAfectado {
@@ -61,6 +63,20 @@ export const useFormParameters = () => {
     return 0;
   };
 
+  // This function gets the parametro_estimacionid for a given name and type
+  const getParameterIdByNameAndType = (name: string, typeId: number): number | null => {
+    const param = parametrosDB.find(
+      p => p.nombre === name && p.tipo_parametro_estimacionid === typeId
+    );
+    
+    if (param) {
+      return param.parametro_estimacionid;
+    }
+    
+    console.warn(`Could not find parameter with name "${name}" and type ${typeId}`);
+    return null;
+  };
+
   useEffect(() => {
     fetchParametrosYElementos();
   }, []);
@@ -70,6 +86,7 @@ export const useFormParameters = () => {
     parametrosDB,
     elementosDB,
     fetchParametrosYElementos,
-    getTypeForParameter
+    getTypeForParameter,
+    getParameterIdByNameAndType
   };
 };

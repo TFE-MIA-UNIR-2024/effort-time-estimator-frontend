@@ -17,10 +17,10 @@ const ParameterSelect = ({ paramId, paramName, options, value, onChange }: Param
         value={value}
         onValueChange={(value) => onChange(paramId, value)}
       >
-        <SelectTrigger>
-          <SelectValue placeholder={options[0]} />
+        <SelectTrigger className="bg-white">
+          <SelectValue placeholder={options.length > 0 ? options[0] : 'Select an option'} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white">
           {options.map(option => (
             <SelectItem key={option} value={option}>
               {option}

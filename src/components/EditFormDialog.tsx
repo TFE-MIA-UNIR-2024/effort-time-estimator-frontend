@@ -77,6 +77,12 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
       }
     });
     
+    // Sort options alphabetically to ensure consistent ordering
+    Object.keys(groupedParams).forEach(key => {
+      const keyNum = parseInt(key);
+      groupedParams[keyNum].opciones.sort();
+    });
+    
     // Add default options if no options are found in the DB
     Object.keys(groupedParams).forEach(key => {
       const keyNum = parseInt(key);
@@ -96,7 +102,13 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
     ? createParameterOptionsFromDB() 
     : defaultParametrosFijos;
 
+  // For debugging
+  console.log("Parametros DB:", parametrosDB);
+  console.log("Parametros fijos procesados:", parametrosFijos);
+  console.log("Selected parametros:", parametros);
+
   const handleFormSave = async () => {
+    console.log("Saving parameters:", parametros);
     const success = await handleSave();
     if (success) {
       onOpenChange(false);
