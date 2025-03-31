@@ -10,8 +10,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { FileText, Loader2 } from "lucide-react";
 import { useNeedForm } from "@/hooks/need/useNeedForm";
+import FileUploadField from "./FileUploadField";
+import FormActions from "./FormActions";
 
 interface NeedFormProps {
   projectId: number;
@@ -44,6 +45,10 @@ const NeedForm = ({ projectId, need, onSuccess, onCancel }: NeedFormProps) => {
     onSuccess,
     onCancel
   });
+  
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileChange(e, text => form.setValue("cuerpo", text));
+  };
 
   return (
     <Form {...form}>
@@ -76,32 +81,11 @@ const NeedForm = ({ projectId, need, onSuccess, onCancel }: NeedFormProps) => {
           )}
         />
 
-        <div className="space-y-2">
-          <FormLabel>Documento PDF</FormLabel>
-          <div className="border border-input rounded-md px-3 py-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <Button type="button" variant="outline" size="sm" className="gap-2">
-                <FileText className="h-4 w-4" />
-                {file ? "Cambiar documento" : "Subir documento"}
-              </Button>
-              <span className="text-sm text-muted-foreground ml-2">
-                {file ? file.name : "Ningún archivo seleccionado"}
-              </span>
-              <input
-                type="file"
-                accept=".pdf"
-                className="hidden"
-                onChange={e => handleFileChange(e, text => form.setValue("cuerpo", text))}
-              />
-            </label>
-          </div>
-          {isExtracting && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Extrayendo texto del PDF...</span>
-            </div>
-          )}
-        </div>
+        <FileUploadField 
+          file={file} 
+          isExtracting={isExtracting} 
+          onFileChange={handleFileUpload}
+        />
         
         <FormField
           control={form.control}
@@ -121,24 +105,12 @@ const NeedForm = ({ projectId, need, onSuccess, onCancel }: NeedFormProps) => {
           )}
         />
         
-        <div className="flex justify-end space-x-2">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={handleCancel}
-            disabled={isSubmitting || isExtracting}
-          >
-            Cancelar
-          </Button>
-          <Button 
-            type="submit"
-            disabled={isSubmitting || isExtracting}
-          >
-            {isSubmitting 
-              ? (isEditing ? "Actualizando..." : "Creando...") 
-              : (isEditing ? "Actualizar" : "Crear")}
-          </Button>
-        </div>
+        <FormActions 
+          isSubmitting={isSubmitting}
+          isExtracting={isExtracting}
+          isEditing={isEditing}
+          onCancel={handleCancel}
+        />
       </form>
     </Form>
   );
