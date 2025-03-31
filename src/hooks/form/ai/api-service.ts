@@ -2,11 +2,11 @@
 import { DetailItem, TitleItem } from "../types";
 
 export async function callOpenAIAPI(prompt: string): Promise<any> {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  const apiKey = import.meta.env.VITE_API_KEY;
   
   // Check if API key is defined
   if (!apiKey) {
-    throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
+    throw new Error("API key not found. Please set the VITE_API_KEY environment variable.");
   }
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
