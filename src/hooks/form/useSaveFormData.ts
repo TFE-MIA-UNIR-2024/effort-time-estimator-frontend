@@ -54,12 +54,14 @@ export const useSaveFormData = (
         
         if (parametroId === null) {
           console.log(`Parameter "${paramName}" not found in DB for type ${typeId}, will create it`);
+          
+          // Fix: Convert Date to ISO string for fecha_de_creacion
           const { data: newParam, error: paramInsertError } = await supabase
             .from('parametro_estimacion')
             .insert({
               nombre: paramName,
               tipo_parametro_estimacionid: typeId,
-              fecha_de_creacion: new Date()
+              fecha_de_creacion: new Date().toISOString()
             })
             .select('parametro_estimacionid')
             .single();
