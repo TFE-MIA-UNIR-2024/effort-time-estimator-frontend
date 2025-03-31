@@ -46,17 +46,20 @@ export const useFormParameters = () => {
 
   // Helper function to get the type (1-6) for a parameter
   const getTypeForParameter = (parametroId: number): number => {
-    // Find the parameter in the DB
+    // First try to find the parameter in the database
     const param = parametrosDB.find(p => p.parametro_estimacionid === parametroId);
     if (param) {
       return param.tipo_parametro_estimacionid;
     }
     
-    // If not found by ID, try to infer type from the 1-6 range
+    // If not found by ID in the database, try to infer type from the parameter ID
+    // Assuming parameter IDs 1-6 correspond to the 6 parameter types
     if (parametroId >= 1 && parametroId <= 6) {
       return parametroId;
     }
     
+    // If we couldn't determine the type, return 0 as a fallback
+    console.warn(`Could not determine type for parameter ID: ${parametroId}`);
     return 0;
   };
 

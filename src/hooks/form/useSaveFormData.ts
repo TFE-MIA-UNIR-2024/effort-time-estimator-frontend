@@ -40,14 +40,16 @@ export const useSaveFormData = (
           );
 
           if (matchingParam) {
+            // Found existing parameter - use it
             records.push({
               requerimientoid: requerimientoId,
               parametro_estimacionid: matchingParam.parametro_estimacionid,
               cantidad_estimada: 1, // We're storing a numeric value now
               tipo_elemento_afectado_id: null
             });
+            console.log(`Using existing parameter: ${value} with id ${matchingParam.parametro_estimacionid}`);
           } else {
-            console.warn(`Could not find matching parameter for ${value} of type ${tipo}`);
+            console.log(`Could not find matching parameter for ${value} of type ${tipo}, creating new one`);
             
             // Insert parameters that don't exist in the DB
             try {
@@ -60,7 +62,11 @@ export const useSaveFormData = (
                 })
                 .select();
                 
-              if (error) throw error;
+              if (error) {
+                console.error('Error inserting parameter:', error);
+                throw error;
+              }
+              
               if (data && data[0]) {
                 records.push({
                   requerimientoid: requerimientoId,
@@ -72,6 +78,7 @@ export const useSaveFormData = (
               }
             } catch (insertError) {
               console.error('Error inserting parameter:', insertError);
+              // Continue with other parameters even if one fails
             }
           }
         }
@@ -95,7 +102,10 @@ export const useSaveFormData = (
           .from('punto_funcion')
           .insert(records);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Error inserting records:', insertError);
+          throw insertError;
+        }
       }
 
       toast({
