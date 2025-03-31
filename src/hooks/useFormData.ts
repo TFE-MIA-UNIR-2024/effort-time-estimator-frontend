@@ -122,8 +122,15 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
 
         data.forEach(item => {
           if (item.parametro_estimacionid) {
-            // For parameters, store the value directly with the parameter ID
-            paramValues[item.parametro_estimacionid] = String(item.cantidad_estimada);
+            // For parameters, find the name of the parameter from DB
+            const param = parametrosDB.find(p => p.parametro_estimacionid === item.parametro_estimacionid);
+            if (param) {
+              // Store by parameter type ID for consistent UI display
+              const tipoId = param.tipo_parametro_estimacionid;
+              if (tipoId && tipoToParametroId[tipoId]) {
+                paramValues[tipoToParametroId[tipoId]] = param.nombre;
+              }
+            }
           }
           if (item.tipo_elemento_afectado_id) {
             // For elements, store the numeric value
@@ -193,14 +200,16 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
 
       const records = [];
 
-      // For parametros, we need to store the parameter ID with the text value
-      // The database expects numeric values for cantidad_estimada
+      // For parametros, we need to find the exact parameter ID by name and type
       for (const [paramId, value] of Object.entries(parametros)) {
         if (value) {
-          // Find the parameter ID from the database that matches this value
+          // Get the type (1-6) for this parameter
+          const tipo = getTypeForParameter(parseInt(paramId));
+          
+          // Find the exact parameter with this name and type
           const matchingParam = parametrosDB.find(p => 
             p.nombre === value && 
-            p.tipo_parametro_estimacionid === getTypeForParameter(parseInt(paramId))
+            p.tipo_parametro_estimacionid === tipo
           );
 
           if (matchingParam) {
@@ -211,7 +220,32 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
               tipo_elemento_afectado_id: null
             });
           } else {
-            console.warn(`Could not find matching parameter for ${value}`);
+            console.warn(`Could not find matching parameter for ${value} of type ${tipo}`);
+            
+            // Insert parameters that don't exist in the DB
+            try {
+              const { data, error } = await supabase
+                .from('parametro_estimacion')
+                .insert({
+                  nombre: value,
+                  tipo_parametro_estimacionid: tipo,
+                  fecha_de_creacion: new Date().toISOString()
+                })
+                .select();
+                
+              if (error) throw error;
+              if (data && data[0]) {
+                records.push({
+                  requerimientoid: requerimientoId,
+                  parametro_estimacionid: data[0].parametro_estimacionid,
+                  cantidad_estimada: 1,
+                  tipo_elemento_afectado_id: null
+                });
+                console.log(`Created new parameter: ${value} with id ${data[0].parametro_estimacionid}`);
+              }
+            } catch (insertError) {
+              console.error('Error inserting parameter:', insertError);
+            }
           }
         }
       }
@@ -260,7 +294,16 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
   const getTypeForParameter = (parametroId: number): number => {
     // Find the parameter in the DB
     const param = parametrosDB.find(p => p.parametro_estimacionid === parametroId);
-    return param?.tipo_parametro_estimacionid || 0;
+    if (param) {
+      return param.tipo_parametro_estimacionid;
+    }
+    
+    // If not found by ID, try to infer type from the 1-6 range
+    if (parametroId >= 1 && parametroId <= 6) {
+      return parametroId;
+    }
+    
+    return 0;
   };
 
   return {
