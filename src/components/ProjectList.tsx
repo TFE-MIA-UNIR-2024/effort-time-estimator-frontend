@@ -1,23 +1,47 @@
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import ProjectCard from "./ProjectCard";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Project {
-  id: number;
-  title: string;
+  proyectoid: number;
+  nombreproyecto: string;
 }
 
-const MOCK_PROJECTS: Project[] = [
-  { id: 1, title: "Implementación de Medio de Pago Visa" },
-  { id: 2, title: "Implementación de Medio de Pago Mastercard" },
-  { id: 3, title: "Proyecto 1" },
-  { id: 4, title: "Proyecto 2" },
-  { id: 5, title: "Plataforma de transacciones" },
-  { id: 6, title: "Migración Laravel a NextJS" },
-  { id: 7, title: "ejemplo" },
-];
-
 const ProjectList = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const { data, error } = await supabase
+          .from('proyecto')
+          .select('*');
+
+        if (error) {
+          throw error;
+        }
+
+        setProjects(data || []);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los proyectos",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProjects();
+  }, [toast]);
+
   return (
     <div className="py-6 px-4 md:px-8">
       <div className="flex justify-between items-center mb-6">
@@ -27,11 +51,21 @@ const ProjectList = () => {
         </Button>
       </div>
       
-      <div className="space-y-4">
-        {MOCK_PROJECTS.map((project) => (
-          <ProjectCard key={project.id} title={project.title} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="py-8 text-center">Cargando proyectos...</div>
+      ) : projects.length > 0 ? (
+        <div className="space-y-4">
+          {projects.map((project) => (
+            <ProjectCard 
+              key={project.proyectoid} 
+              id={project.proyectoid} 
+              title={project.nombreproyecto} 
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="py-8 text-center">No hay proyectos disponibles</div>
+      )}
     </div>
   );
 };
