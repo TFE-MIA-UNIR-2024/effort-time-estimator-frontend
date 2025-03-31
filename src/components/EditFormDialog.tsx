@@ -1,23 +1,7 @@
-import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface ParametroEstimacion {
-  parametro_estimacionid: number;
-  nombre: string;
-  tipo_parametro_estimacionid: number;
-}
-
-interface TipoElementoAfectado {
-  tipo_elemento_afectadoid: number;
-  nombre: string;
-}
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useFormData } from "@/hooks/useFormData";
+import DialogContentComponent from "./form/DialogContent";
 
 interface EditFormProps {
   open: boolean;
@@ -51,256 +35,36 @@ const elementosFields = [
 ];
 
 const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) => {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [parametros, setParametros] = useState<Record<number, string>>({});
-  const [elementos, setElementos] = useState<Record<number, number>>({});
-  const [parametrosDB, setParametrosDB] = useState<ParametroEstimacion[]>([]);
-  const [elementosDB, setElementosDB] = useState<TipoElementoAfectado[]>([]);
+  const {
+    loading,
+    parametros,
+    elementos,
+    handleElementChange,
+    handleParametroChange,
+    handleSave
+  } = useFormData(requerimientoId, open);
 
-  useEffect(() => {
-    if (open) {
-      fetchParametrosYElementos();
-      fetchExistingData();
-    }
-  }, [open, requerimientoId]);
-
-  const fetchParametrosYElementos = async () => {
-    try {
-      const { data: parametrosData, error: parametrosError } = await supabase
-        .from('parametro_estimacion')
-        .select('*');
-
-      if (parametrosError) throw parametrosError;
-      setParametrosDB(parametrosData || []);
-
-      const { data: elementosData, error: elementosError } = await supabase
-        .from('tipo_elemento_afectado')
-        .select('*');
-
-      if (elementosError) throw elementosError;
-      setElementosDB(elementosData || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los datos",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const fetchExistingData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('punto_funcion')
-        .select('*')
-        .eq('requerimientoid', requerimientoId);
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const paramValues: Record<number, string> = {};
-        const elemValues: Record<number, number> = {};
-
-        data.forEach(item => {
-          if (item.parametro_estimacionid) {
-            // Find matching parameter from fixed parameters
-            const paramIndex = parametrosFijos.findIndex(p => p.id === item.parametro_estimacionid);
-            if (paramIndex !== -1) {
-              const value = item.cantidad_estimada ? String(item.cantidad_estimada) : parametrosFijos[paramIndex].opciones[0];
-              paramValues[item.parametro_estimacionid] = value;
-            }
-          }
-          if (item.tipo_elemento_afectado_id) {
-            // Store numeric value (even zero)
-            elemValues[item.tipo_elemento_afectado_id] = item.cantidad_estimada !== null ? Number(item.cantidad_estimada) : 0;
-          }
-        });
-
-        setParametros(paramValues);
-        setElementos(elemValues);
-      }
-    } catch (error) {
-      console.error('Error fetching existing data:', error);
-    }
-  };
-
-  const handleElementChange = (id: number, value: string) => {
-    setElementos({
-      ...elementos,
-      [id]: parseInt(value) || 0
-    });
-  };
-
-  const handleParametroChange = (id: number, value: string) => {
-    setParametros({
-      ...parametros,
-      [id]: value
-    });
-  };
-
-  const handleSave = async () => {
-    setLoading(true);
-    try {
-      // First delete existing records
-      const { error: deleteError } = await supabase
-        .from('punto_funcion')
-        .delete()
-        .eq('requerimientoid', requerimientoId);
-
-      if (deleteError) throw deleteError;
-
-      const records = [];
-
-      // For parametros, store numeric values when possible to match the DB column type
-      for (const [paramId, value] of Object.entries(parametros)) {
-        if (value) {
-          // Try to convert the value to a number if possible, otherwise keep it as is
-          let cantidad;
-          const numericValue = Number(value);
-          
-          // If it's a valid number, use it
-          if (!isNaN(numericValue)) {
-            cantidad = numericValue;
-          } else {
-            // For storing string values in the DB, set cantidad to 1 (default value)
-            // and use the paramId to reference the parameter
-            cantidad = 1;
-          }
-          
-          records.push({
-            requerimientoid: requerimientoId,
-            parametro_estimacionid: parseInt(paramId),
-            cantidad_estimada: cantidad,
-            tipo_elemento_afectado_id: null
-          });
-        }
-      }
-
-      // For elementos, we already have numeric values
-      for (const [elemId, cantidad] of Object.entries(elementos)) {
-        if (cantidad >= 0) { // Include zero values
-          records.push({
-            requerimientoid: requerimientoId,
-            tipo_elemento_afectado_id: parseInt(elemId),
-            cantidad_estimada: cantidad,
-            parametro_estimacionid: null
-          });
-        }
-      }
-
-      if (records.length > 0) {
-        console.log('Saving records:', records);
-        const { error: insertError } = await supabase
-          .from('punto_funcion')
-          .insert(records);
-
-        if (insertError) throw insertError;
-      }
-
-      toast({
-        title: "Éxito",
-        description: "Formulario guardado correctamente",
-      });
+  const handleFormSave = async () => {
+    const success = await handleSave();
+    if (success) {
       onOpenChange(false);
-    } catch (error) {
-      console.error('Error saving form:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo guardar el formulario",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
   };
-
-  const elementosGroups = [];
-  const itemsPerGroup = Math.ceil(elementosFields.length / 3);
-  
-  for (let i = 0; i < elementosFields.length; i += itemsPerGroup) {
-    elementosGroups.push(elementosFields.slice(i, i + itemsPerGroup));
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-bold">
-            Mantenimiento de parámetros del sistema
-          </DialogTitle>
-          <Button
-            variant="ghost"
-            className="absolute right-4 top-4 rounded-sm p-0 h-6 w-6"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </DialogHeader>
-
-        <ScrollArea className="max-h-[70vh] pr-4">
-          <div className="space-y-6 py-4 px-1">
-            <div className="space-y-1">
-              <h3 className="text-lg font-semibold mb-3">Parámetros</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {parametrosFijos.map((param) => (
-                  <div key={param.id} className="space-y-1">
-                    <label className="text-sm font-medium">{param.nombre}</label>
-                    <Select
-                      value={parametros[param.id] || param.opciones[0]}
-                      onValueChange={(value) => handleParametroChange(param.id, value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={param.opciones[0]} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {param.opciones.map(option => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold">Elementos afectados</h3>
-              
-              <div className="grid grid-cols-3 gap-x-4 gap-y-2">
-                {elementosGroups.map((group, groupIndex) => (
-                  <div key={groupIndex} className="space-y-2">
-                    {group.map(elemento => (
-                      <div key={elemento.id} className="space-y-1">
-                        <label className="text-sm font-medium block">{elemento.label}</label>
-                        <Input
-                          type="number"
-                          min="0"
-                          className="h-8"
-                          value={elementos[elemento.id] !== undefined ? elementos[elemento.id] : 0}
-                          onChange={(e) => handleElementChange(elemento.id, e.target.value)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <Button 
-                onClick={handleSave} 
-                disabled={loading}
-                className="bg-black hover:bg-gray-800 text-white"
-              >
-                Guardar
-              </Button>
-            </div>
-          </div>
-        </ScrollArea>
+        <DialogContentComponent
+          loading={loading}
+          parametros={parametros}
+          elementos={elementos}
+          parametrosFijos={parametrosFijos}
+          elementosFields={elementosFields}
+          onParametroChange={handleParametroChange}
+          onElementChange={handleElementChange}
+          onClose={() => onOpenChange(false)}
+          onSave={handleFormSave}
+        />
       </DialogContent>
     </Dialog>
   );
