@@ -7,13 +7,13 @@ export function useParametersState() {
   const handleParametroChange = (parametroId: number, value: string) => {
     setParametros(prev => ({
       ...prev,
-      [parametroId]: value
+      [parametroId]: value,
     }));
   };
 
   return {
     parametros,
-    setParametros,
-    handleParametroChange
+    handleParametroChange,
+    setParametros
   };
 }

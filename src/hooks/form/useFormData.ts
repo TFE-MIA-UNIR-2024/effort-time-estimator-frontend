@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useSaveFormData } from "./useSaveFormData";
 import { useFetchFormData } from "./useFetchFormData";
@@ -46,22 +46,27 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
   const { loading, parametros: fetchedParametros, elementos: fetchedElementos, tiposParametros, dataExists, requirement } = 
     useFetchFormData(requerimientoId, isOpen);
   
-  const { parametros, handleParametroChange } = useParametersState();
+  const { parametros, handleParametroChange, setParametros } = useParametersState();
   const { elementos, handleElementChange, setElementos } = useElementsState();
   const { aiLoading, handleGenerateAIEstimation: generateAIEstimation } = 
     useAIEstimationHandler(elementos, setElementos, elementosFields, requirement);
 
-  // Sync state from fetched data
-  useState(() => {
-    if (!loading) {
-      // Update local state with fetched data
-      Object.keys(fetchedParametros).forEach(key => {
-        handleParametroChange(Number(key), fetchedParametros[Number(key)]);
-      });
+  // Sync state from fetched data using useEffect
+  useEffect(() => {
+    if (!loading && fetchedParametros && fetchedElementos) {
+      console.log("Parameters fetched:", Object.keys(fetchedParametros).length);
+      console.log("Elements fetched:", fetchedElementos.length);
+      console.log("Parameter types fetched:", tiposParametros.length);
       
-      setElementos(fetchedElementos);
+      // Update parameters state with fetched data
+      setParametros(fetchedParametros);
+      
+      // Update elements state with fetched data
+      if (fetchedElementos.length > 0) {
+        setElementos(fetchedElementos);
+      }
     }
-  });
+  }, [loading, fetchedParametros, fetchedElementos, tiposParametros, setParametros, setElementos]);
 
   const handleSave = async () => {
     try {
