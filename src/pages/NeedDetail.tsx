@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import NavBar from "@/components/NavBar";
 import EditFormDialog from "@/components/EditFormDialog";
+import RealQuantityDialog from "@/components/RealQuantityDialog";
 import NeedHeader from "@/components/need/NeedHeader";
 import NeedContent from "@/components/need/NeedContent";
 import RequirementsList from "@/components/requirement/RequirementsList";
@@ -15,6 +16,7 @@ const NeedDetail = () => {
   const { toast } = useToast();
   const { need, requirements, loading } = useNeedDetail(id);
   const [editFormOpen, setEditFormOpen] = useState(false);
+  const [realQuantityOpen, setRealQuantityOpen] = useState(false);
   const [selectedRequirementId, setSelectedRequirementId] = useState<number | null>(null);
 
   const handleAddRequirement = () => {
@@ -34,10 +36,8 @@ const NeedDetail = () => {
   };
   
   const handleAddRealQuantity = (requirementId: number) => {
-    toast({
-      title: "Función no implementada",
-      description: "La función para añadir cantidad real está pendiente de implementar",
-    });
+    setSelectedRequirementId(requirementId);
+    setRealQuantityOpen(true);
   };
   
   const handleEditRequirement = (requirementId: number) => {
@@ -104,11 +104,18 @@ const NeedDetail = () => {
       </main>
 
       {selectedRequirementId && (
-        <EditFormDialog 
-          open={editFormOpen} 
-          onOpenChange={setEditFormOpen} 
-          requerimientoId={selectedRequirementId} 
-        />
+        <>
+          <EditFormDialog 
+            open={editFormOpen} 
+            onOpenChange={setEditFormOpen} 
+            requerimientoId={selectedRequirementId} 
+          />
+          <RealQuantityDialog
+            open={realQuantityOpen}
+            onOpenChange={setRealQuantityOpen}
+            requerimientoId={selectedRequirementId}
+          />
+        </>
       )}
     </div>
   );
