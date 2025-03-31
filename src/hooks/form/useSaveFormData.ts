@@ -2,20 +2,20 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { ParametroEstimacion } from "./useFormParameters";
+import { Element } from "./types";
 
-export const useSaveFormData = (
-  requerimientoId: number,
-  parametros: Record<number, string>,
-  elementos: Record<number, number>,
-  parametrosDB: ParametroEstimacion[],
-  getTypeForParameter: (parametroId: number) => number,
-  getParameterIdByNameAndType: (name: string, typeId: number) => number | null
-) => {
+interface SaveFormDataParams {
+  requerimientoId: number;
+  parametros: any[];
+  elementos: Element[];
+  dataExists: boolean;
+}
+
+export const useSaveFormData = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSave = async () => {
+  const handleSave = async ({ requerimientoId, parametros, elementos, dataExists }: SaveFormDataParams) => {
     setLoading(true);
     try {
       console.log("Saving form data for requerimiento:", requerimientoId);
@@ -35,69 +35,34 @@ export const useSaveFormData = (
       const inserts = [];
 
       // Process each parameter
-      for (const [typeIdStr, paramName] of Object.entries(parametros)) {
-        const typeId = parseInt(typeIdStr);
-        
-        if (!paramName || paramName.trim() === '') {
-          console.log(`Skipping empty parameter for type ${typeId}`);
+      for (const param of parametros) {
+        if (!param.value) {
+          console.log(`Skipping empty parameter for type ${param.tipo_parametro_estimacionid}`);
           continue;
         }
         
-        console.log(`Processing parameter: ${paramName} of type ${typeId}`);
-        
-        // Get the parametro_estimacionid for this name and type
-        let parametroId = getParameterIdByNameAndType(paramName, typeId);
-        
-        if (parametroId === null) {
-          console.log(`Parameter "${paramName}" not found in DB for type ${typeId}, will create it`);
-          
-          // Fix: Convert Date to ISO string for fecha_de_creacion
-          const { data: newParam, error: paramInsertError } = await supabase
-            .from('parametro_estimacion')
-            .insert({
-              nombre: paramName,
-              tipo_parametro_estimacionid: typeId,
-              fecha_de_creacion: new Date().toISOString()
-            })
-            .select('parametro_estimacionid')
-            .single();
-          
-          if (paramInsertError) {
-            console.error('Error creating parameter:', paramInsertError);
-            throw paramInsertError;
-          }
-          
-          if (newParam) {
-            parametroId = newParam.parametro_estimacionid;
-            console.log(`Created new parameter with ID: ${parametroId}`);
-          } else {
-            console.warn(`Failed to create parameter: ${paramName}`);
-            continue;
-          }
-        }
+        console.log(`Processing parameter: ${param.value} of type ${param.tipo_parametro_estimacionid}`);
         
         // Create punto_funcion record for this parameter
         inserts.push({
           requerimientoid: requerimientoId,
-          parametro_estimacionid: parametroId,
+          parametro_estimacionid: param.value,
           cantidad_estimada: 0  // Default value
         });
       }
       
       // Process each elemento
-      for (const [elementoIdStr, cantidad] of Object.entries(elementos)) {
-        const elementoId = parseInt(elementoIdStr);
-        
-        if (cantidad <= 0) {
-          console.log(`Skipping elemento ${elementoId} with zero or negative quantity`);
+      for (const elemento of elementos) {
+        if (elemento.cantidad_estimada <= 0) {
+          console.log(`Skipping elemento ${elemento.elemento_id} with zero or negative quantity`);
           continue;
         }
         
         // Create punto_funcion record for this elemento
         inserts.push({
           requerimientoid: requerimientoId,
-          tipo_elemento_afectado_id: elementoId,
-          cantidad_estimada: cantidad
+          tipo_elemento_afectado_id: elemento.tipo_elemento_afectado_id || elemento.elemento_id,
+          cantidad_estimada: elemento.cantidad_estimada
         });
       }
       

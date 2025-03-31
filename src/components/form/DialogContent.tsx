@@ -11,8 +11,8 @@ interface DialogContentProps {
   elementos: any[];
   tiposParametros: any[];
   elementosFields: any[];
-  onParametroChange: (id: number, value: number) => void;
-  onElementChange: (id: number, value: number) => void;
+  onParametroChange: (id: number, value: string) => void;
+  onElementChange: (id: number, value: string) => void;
   onClose: () => void;
   onSave: () => void;
   dataExists: boolean;

@@ -4,15 +4,16 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSaveFormData } from "./useSaveFormData";
 import { useAIEstimation } from "./useAIEstimation";
+import { Element } from "./types";
 
 interface FormData {
   loading: boolean;
   parametros: any[];
-  elementos: any[];
+  elementos: Element[];
   tiposParametros: any[];
   dataExists: boolean;
-  handleElementChange: (elementId: number, value: number) => void;
-  handleParametroChange: (parametroId: number, value: number) => void;
+  handleElementChange: (elementId: number, value: string) => void;
+  handleParametroChange: (parametroId: number, value: string) => void;
   handleSave: () => Promise<boolean>;
   handleGenerateAIEstimation: () => Promise<void>;
   aiLoading: boolean;
@@ -22,13 +23,31 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAILoading] = useState(false);
   const [parametros, setParametros] = useState<any[]>([]);
-  const [elementos, setElementos] = useState<any[]>([]);
+  const [elementos, setElementos] = useState<Element[]>([]);
   const [tiposParametros, setTiposParametros] = useState<any[]>([]);
   const [requirement, setRequirement] = useState<any>(null);
   const [dataExists, setDataExists] = useState(false);
   const { toast } = useToast();
-  const { saveFormData } = useSaveFormData();
+  // Use the hook directly without calling it
+  const { handleSave: saveFormDataFn } = useSaveFormData();
   const { generateWeights } = useAIEstimation();
+
+  // Define the elementosFields that will be used in the form
+  const elementosFields = [
+    { id: 1, label: "Tablas" },
+    { id: 2, label: "Triggers/SP" },
+    { id: 3, label: "Interfaces c/aplicativos" },
+    { id: 4, label: "Formularios" },
+    { id: 5, label: "Subrutinas complejas" },
+    { id: 6, label: "Interfaces con BD" },
+    { id: 7, label: "Reportes" },
+    { id: 8, label: "Componentes" },
+    { id: 9, label: "Javascript" },
+    { id: 10, label: "Componentes Config. y Pruebas" },
+    { id: 11, label: "Despliegue app movil" },
+    { id: 12, label: "QA" },
+    { id: 13, label: "PF" },
+  ];
 
   useEffect(() => {
     if (isOpen && requerimientoId) {
@@ -118,7 +137,7 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
         });
         
         // Fetch element names for elements that have data
-        const elementIds = Object.keys(groupedByParametro.elements);
+        const elementIds = Object.keys(groupedByParametro.elements).map(Number);
         if (elementIds.length > 0) {
           const { data: elementNames, error: elementError } = await supabase
             .from('elemento_afectado')
@@ -157,17 +176,38 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
     }
   };
 
-  const handleElementChange = (elementId: number, value: number) => {
-    setElementos(prev => 
-      prev.map(elem => 
-        elem.elemento_id === elementId 
-          ? { ...elem, cantidad_estimada: value } 
-          : elem
-      )
-    );
+  const handleElementChange = (elementId: number, value: string) => {
+    const numericValue = parseFloat(value) || 0;
+    
+    setElementos(prev => {
+      const elementExists = prev.find(elem => 
+        elem.elemento_id === elementId || elem.tipo_elemento_afectado_id === elementId
+      );
+      
+      if (elementExists) {
+        // Update existing element
+        return prev.map(elem => 
+          (elem.elemento_id === elementId || elem.tipo_elemento_afectado_id === elementId)
+            ? { ...elem, cantidad_estimada: numericValue } 
+            : elem
+        );
+      } else {
+        // Create new element
+        const elementField = elementosFields.find(field => field.id === elementId);
+        if (!elementField) return prev;
+        
+        return [...prev, {
+          elemento_id: elementId,
+          nombre: elementField.label,
+          cantidad_estimada: numericValue,
+          cantidad_real: null,
+          tipo_elemento_afectado_id: elementId
+        }];
+      }
+    });
   };
 
-  const handleParametroChange = (parametroId: number, value: number) => {
+  const handleParametroChange = (parametroId: number, value: string) => {
     setParametros(prev => 
       prev.map(param => 
         param.tipo_parametro_estimacionid === parametroId 
@@ -179,7 +219,7 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
 
   const handleSave = async () => {
     try {
-      const success = await saveFormData({
+      const success = await saveFormDataFn({
         requerimientoId,
         parametros,
         elementos,
@@ -223,8 +263,8 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
       );
 
       // Update elementos based on weights
-      const newElementos = elementosFields.map((field, index) => {
-        const existingElement = elementos.find(e => e.nombre === field.label);
+      const newElementos = elementosFields.map((field) => {
+        const existingElement = elementos.find(e => e.elemento_id === field.id || e.tipo_elemento_afectado_id === field.id);
         const value = weights[field.label] || 0;
 
         return existingElement 
@@ -234,8 +274,7 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
               nombre: field.label,
               cantidad_estimada: value,
               cantidad_real: null,
-              tipo_elemento_afectado_id: field.id,
-              requerimiento: requirement.nombrerequerimiento
+              tipo_elemento_afectado_id: field.id
             };
       });
 
@@ -270,20 +309,3 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
     aiLoading
   };
 }
-
-// Define the elementosFields that will be used in the form
-const elementosFields = [
-  { id: 1, label: "Tablas" },
-  { id: 2, label: "Triggers/SP" },
-  { id: 3, label: "Interfaces c/aplicativos" },
-  { id: 4, label: "Formularios" },
-  { id: 5, label: "Subrutinas complejas" },
-  { id: 6, label: "Interfaces con BD" },
-  { id: 7, label: "Reportes" },
-  { id: 8, label: "Componentes" },
-  { id: 9, label: "Javascript" },
-  { id: 10, label: "Componentes Config. y Pruebas" },
-  { id: 11, label: "Despliegue app movil" },
-  { id: 12, label: "QA" },
-  { id: 13, label: "PF" },
-];

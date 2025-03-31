@@ -34,3 +34,13 @@ export interface WeightFormData {
   "QA": number;
   "PF": number;
 }
+
+// Add element type for consistency
+export interface Element {
+  elemento_id: number;
+  nombre: string;
+  cantidad_estimada: number;
+  cantidad_real: number | null;
+  tipo_elemento_afectado_id: number;
+  punto_funcionid?: number;
+}
