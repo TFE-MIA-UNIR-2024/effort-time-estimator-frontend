@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -7,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import { MoreVertical, FileText, Plus } from "lucide-react";
 import NeedForm from "./NeedForm";
+import { useNavigate } from "react-router-dom";
 import { 
   Dialog, 
   DialogContent, 
@@ -36,6 +36,7 @@ const NeedsList = ({ projectId }: { projectId: number }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentNeed, setCurrentNeed] = useState<Need | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const fetchNeeds = async () => {
     try {
@@ -78,12 +79,7 @@ const NeedsList = ({ projectId }: { projectId: number }) => {
   };
 
   const handleViewDetails = (need: Need) => {
-    // Here you would handle viewing the need details
-    // For now just show a toast to demonstrate the functionality
-    toast({
-      title: "Ver detalles",
-      description: `Viendo detalles de ${need.nombrenecesidad}`,
-    });
+    navigate(`/need/${need.necesidadid}`);
   };
 
   const handleDeleteNeed = async (needId: number) => {
