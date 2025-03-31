@@ -20,14 +20,16 @@ export const useRequirementsExtraction = () => {
   async function getRequirementsTitles(prompt: string) {
     try {
       // Check if API key is defined
-      if (!import.meta.env.VITE_OPENAI_API_KEY) {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      if (!apiKey) {
         throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
       }
       
+      console.log("Calling OpenAI API to extract titles...");
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -104,10 +106,12 @@ export const useRequirementsExtraction = () => {
   ): Promise<string> {
     try {
       // Check if API key is defined
-      if (!import.meta.env.VITE_OPENAI_API_KEY) {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      if (!apiKey) {
         throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
       }
       
+      console.log(`Getting description for title: "${title}"`);
       const prompt = `
         Eres un experto en extracción de datos estructurados.
         Se te proporcionará un título y un documento completo.
@@ -128,7 +132,7 @@ export const useRequirementsExtraction = () => {
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -178,13 +182,16 @@ export const useRequirementsExtraction = () => {
       setProgress(0);
       
       // Check if API key is defined
-      if (!import.meta.env.VITE_OPENAI_API_KEY) {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      if (!apiKey) {
         throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
       }
       
+      console.log("Starting requirement extraction process...");
       // Get titles from the document
       const titles = await getRequirementsTitles(needBody);
       setProgress(20);
+      console.log(`Extracted ${titles.length} titles`);
 
       // Get descriptions for each title
       const descriptions: DescriptionItem[] = [];
@@ -198,6 +205,7 @@ export const useRequirementsExtraction = () => {
           description,
         });
         setProgress(20 + Math.round(((i + 1) / totalTitles) * 70));
+        console.log(`Processed title ${i+1}/${totalTitles}`);
       }
 
       // Create new requirements with the extracted data
@@ -210,6 +218,7 @@ export const useRequirementsExtraction = () => {
         fechacreacion: new Date().toISOString(),
       }));
 
+      console.log(`Creating ${newRequirements.length} new requirements in database`);
       // Insert requirements into the database
       setProgress(90);
       const { error } = await supabase
@@ -219,6 +228,7 @@ export const useRequirementsExtraction = () => {
       if (error) throw error;
 
       setProgress(100);
+      console.log("Requirements created successfully");
       toast({
         title: "Éxito",
         description: `Se han extraído ${newRequirements.length} requerimientos con IA`,

@@ -24,6 +24,17 @@ export function useAIEstimationHandler(
       return;
     }
 
+    // Check if API key is defined
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    if (!apiKey) {
+      toast({
+        title: "Error de configuración",
+        description: "No se ha configurado la clave de API de OpenAI. Contacte al administrador del sistema.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setAILoading(true);
     try {
       const weights = await generateWeights(

@@ -14,10 +14,16 @@ export const useRequirementsExtraction = () => {
   const { toast } = useToast();
 
   const getRequirementsTitles = async (prompt: string) => {
+    // Check if API key is defined
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
+    }
+    
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${import.meta.env.VITE_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -76,6 +82,12 @@ export const useRequirementsExtraction = () => {
     title: string,
     completeDocument: string
   ) => {
+    // Check if API key is defined
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
+    }
+    
     const prompt = `
       Eres un experto en extracción de datos estructurados.
       Se te proporcionará un título y un documento completo.
@@ -96,7 +108,7 @@ export const useRequirementsExtraction = () => {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${import.meta.env.VITE_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -138,6 +150,12 @@ export const useRequirementsExtraction = () => {
     try {
       setIsExtracting(true);
       onProgress(0);
+      
+      // Check if API key is defined
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      if (!apiKey) {
+        throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
+      }
       
       const titles = await getRequirementsTitles(needBody);
       onProgress(20);

@@ -1,11 +1,18 @@
 
 export async function callOpenAIAPI(prompt: string, model: string = "gpt-4o-mini-2024-07-18"): Promise<any> {
   try {
+    // Check if API key is defined
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
+    }
+    
+    console.log(`Calling OpenAI API with model: ${model}`);
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+        "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         model: model,
@@ -80,6 +87,7 @@ export async function callOpenAIAPI(prompt: string, model: string = "gpt-4o-mini
     }
 
     const data = await response.json();
+    console.log("API response received successfully");
     
     // Ensure the response contains the expected content
     if (
