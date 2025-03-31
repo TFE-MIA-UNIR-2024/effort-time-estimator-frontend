@@ -15,10 +15,10 @@ const ParametersSection = ({ parametros, parametrosFijos, onParametroChange }: P
         {parametrosFijos.map((param) => (
           <ParameterSelect
             key={param.id}
-            paramId={param.id}
-            paramName={param.nombre}
+            id={param.id}
+            name={param.nombre}
             options={param.opciones}
-            value={parametros[param.id] || param.opciones[0]}
+            value={parametros[param.id] || ""}
             onChange={onParametroChange}
           />
         ))}
