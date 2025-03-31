@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 import ParametersSection from "./ParametersSection";
 import ElementsSection from "./ElementsSection";
+import { Element } from "@/hooks/form/types";
+import { TipoParametroEstimacion } from "@/hooks/form/useFormParameters";
 
 interface DialogContentProps {
   loading: boolean;
-  parametros: any[];
-  elementos: any[];
-  tiposParametros: any[];
-  elementosFields: any[];
+  parametros: Record<number, string>;
+  elementos: Element[];
+  tiposParametros: TipoParametroEstimacion[];
+  elementosFields: { id: number; label: string }[];
   onParametroChange: (id: number, value: string) => void;
   onElementChange: (id: number, value: string) => void;
   onClose: () => void;

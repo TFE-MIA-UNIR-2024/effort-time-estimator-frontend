@@ -1,8 +1,9 @@
 
 import ElementInput from "./ElementInput";
+import { Element } from "@/hooks/form/types";
 
 interface ElementsSectionProps {
-  elementos: any[];
+  elementos: Element[];
   elementosFields: { id: number; label: string }[];
   onElementChange: (id: number, value: string) => void;
 }
@@ -18,7 +19,9 @@ const ElementsSection = ({ elementos, elementosFields, onElementChange }: Elemen
 
   // Find element value by ID
   const getElementValue = (elementId: number) => {
-    const element = elementos.find(elem => elem.elemento_id === elementId || elem.tipo_elemento_afectado_id === elementId);
+    const element = elementos.find(elem => 
+      elem.elemento_id === elementId || elem.tipo_elemento_afectado_id === elementId
+    );
     return element ? element.cantidad_estimada : 0;
   };
 
