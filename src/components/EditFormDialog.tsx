@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -144,6 +143,7 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
   const handleSave = async () => {
     setLoading(true);
     try {
+      // First delete existing records
       const { error: deleteError } = await supabase
         .from('punto_funcion')
         .delete()
@@ -153,19 +153,34 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
 
       const records = [];
 
+      // For parametros, store numeric values when possible to match the DB column type
       for (const [paramId, value] of Object.entries(parametros)) {
         if (value) {
+          // Try to convert the value to a number if possible, otherwise keep it as is
+          let cantidad;
+          const numericValue = Number(value);
+          
+          // If it's a valid number, use it
+          if (!isNaN(numericValue)) {
+            cantidad = numericValue;
+          } else {
+            // For storing string values in the DB, set cantidad to 1 (default value)
+            // and use the paramId to reference the parameter
+            cantidad = 1;
+          }
+          
           records.push({
             requerimientoid: requerimientoId,
             parametro_estimacionid: parseInt(paramId),
-            cantidad_estimada: value,
+            cantidad_estimada: cantidad,
             tipo_elemento_afectado_id: null
           });
         }
       }
 
+      // For elementos, we already have numeric values
       for (const [elemId, cantidad] of Object.entries(elementos)) {
-        if (cantidad >= 0) { // Changed from `cantidad > 0` to include zero values
+        if (cantidad >= 0) { // Include zero values
           records.push({
             requerimientoid: requerimientoId,
             tipo_elemento_afectado_id: parseInt(elemId),
@@ -176,6 +191,7 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
       }
 
       if (records.length > 0) {
+        console.log('Saving records:', records);
         const { error: insertError } = await supabase
           .from('punto_funcion')
           .insert(records);
