@@ -54,7 +54,7 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
     
     // First, initialize with defaults
     defaultParametrosFijos.forEach(param => {
-      groupedParams[param.id] = { ...param };
+      groupedParams[param.id] = { ...param, opciones: [] };
     });
     
     // Find parameters in the database for each type
@@ -64,15 +64,26 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
         // If we don't already have this type, create it
         if (!groupedParams[tipoId]) {
           groupedParams[tipoId] = {
-            id: param.parametro_estimacionid,
-            nombre: param.nombre,
+            id: tipoId,
+            nombre: defaultParametrosFijos.find(p => p.id === tipoId)?.nombre || `Tipo ${tipoId}`,
             opciones: []
           };
         }
         
-        // Add this parameter's name as an option
+        // Add this parameter's name as an option if not already there
         if (!groupedParams[tipoId].opciones.includes(param.nombre)) {
           groupedParams[tipoId].opciones.push(param.nombre);
+        }
+      }
+    });
+    
+    // Add default options if no options are found in the DB
+    Object.keys(groupedParams).forEach(key => {
+      const keyNum = parseInt(key);
+      if (groupedParams[keyNum].opciones.length === 0) {
+        const defaultParam = defaultParametrosFijos.find(p => p.id === keyNum);
+        if (defaultParam) {
+          groupedParams[keyNum].opciones = [...defaultParam.opciones];
         }
       }
     });

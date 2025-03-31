@@ -17,6 +17,9 @@ export const useSaveFormData = (
   const handleSave = async () => {
     setLoading(true);
     try {
+      console.log("Saving form for requerimiento:", requerimientoId);
+      console.log("Parametros to save:", parametros);
+      
       // First delete existing records
       const { error: deleteError } = await supabase
         .from('punto_funcion')
@@ -27,11 +30,12 @@ export const useSaveFormData = (
 
       const records = [];
 
-      // For parametros, we need to find the exact parameter ID by name and type
+      // For each parameter type, find the matching parameter in DB or create a new one
       for (const [paramId, value] of Object.entries(parametros)) {
         if (value) {
           // Get the type (1-6) for this parameter
           const tipo = getTypeForParameter(parseInt(paramId));
+          console.log(`Processing parameter: ${value} with type ${tipo}`);
           
           // Find the exact parameter with this name and type
           const matchingParam = parametrosDB.find(p => 
@@ -44,7 +48,7 @@ export const useSaveFormData = (
             records.push({
               requerimientoid: requerimientoId,
               parametro_estimacionid: matchingParam.parametro_estimacionid,
-              cantidad_estimada: 1, // We're storing a numeric value now
+              cantidad_estimada: 1,
               tipo_elemento_afectado_id: null
             });
             console.log(`Using existing parameter: ${value} with id ${matchingParam.parametro_estimacionid}`);
@@ -64,10 +68,25 @@ export const useSaveFormData = (
                 
               if (error) {
                 console.error('Error inserting parameter:', error);
-                throw error;
-              }
-              
-              if (data && data[0]) {
+                // Try to find if the parameter already exists with a different case or trailing spaces
+                const similarParams = parametrosDB.filter(p => 
+                  p.nombre.toLowerCase().trim() === value.toLowerCase().trim() && 
+                  p.tipo_parametro_estimacionid === tipo
+                );
+                
+                if (similarParams.length > 0) {
+                  const param = similarParams[0];
+                  records.push({
+                    requerimientoid: requerimientoId,
+                    parametro_estimacionid: param.parametro_estimacionid,
+                    cantidad_estimada: 1,
+                    tipo_elemento_afectado_id: null
+                  });
+                  console.log(`Used similar parameter: ${param.nombre} with id ${param.parametro_estimacionid}`);
+                } else {
+                  throw error;
+                }
+              } else if (data && data[0]) {
                 records.push({
                   requerimientoid: requerimientoId,
                   parametro_estimacionid: data[0].parametro_estimacionid,
