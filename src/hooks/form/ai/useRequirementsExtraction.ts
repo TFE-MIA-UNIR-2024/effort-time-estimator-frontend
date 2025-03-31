@@ -18,7 +18,7 @@ export const useRequirementsExtraction = () => {
   };
 
   async function getRequirementsTitles(prompt: string) {
-    const apiKey = import.meta.env.VITE_API_KEY;
+    const apiKey = "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"
     
     // Check if API key is defined
     if (!apiKey) {
@@ -99,7 +99,7 @@ export const useRequirementsExtraction = () => {
     title: string,
     completeDocument: string
   ): Promise<string> {
-    const apiKey = import.meta.env.VITE_API_KEY;
+    const apiKey = "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"
     
     // Check if API key is defined
     if (!apiKey) {
