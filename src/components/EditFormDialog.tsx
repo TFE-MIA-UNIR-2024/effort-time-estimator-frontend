@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,9 +106,14 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
 
         data.forEach(item => {
           if (item.parametro_estimacionid) {
-            paramValues[item.parametro_estimacionid] = String(item.parametro_estimacionid);
+            // Find matching parameter from database
+            const parametroInfo = parametrosFijos.find(p => p.id === item.parametro_estimacionid);
+            if (parametroInfo) {
+              paramValues[item.parametro_estimacionid] = item.cantidad_estimada || parametroInfo.opciones[0] || "";
+            }
           }
           if (item.tipo_elemento_afectado_id) {
+            // Make sure to store 0 as 0, not as empty string
             elemValues[item.tipo_elemento_afectado_id] = item.cantidad_estimada || 0;
           }
         });
@@ -258,7 +264,7 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
                           type="number"
                           min="0"
                           className="h-8"
-                          value={elementos[elemento.id] || ''}
+                          value={elementos[elemento.id] !== undefined ? elementos[elemento.id] : ''}
                           onChange={(e) => handleElementChange(elemento.id, e.target.value)}
                         />
                       </div>
