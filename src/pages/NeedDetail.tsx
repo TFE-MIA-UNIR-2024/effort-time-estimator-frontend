@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import NavBar from "@/components/NavBar";
 
 interface Need {
@@ -35,6 +35,7 @@ const NeedDetail = () => {
   const [need, setNeed] = useState<Need | null>(null);
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFullContent, setShowFullContent] = useState(false);
 
   useEffect(() => {
     async function fetchNeedAndRequirements() {
@@ -86,6 +87,17 @@ const NeedDetail = () => {
     fetchNeedAndRequirements();
   }, [id, toast]);
 
+  // Function to truncate text
+  const truncateText = (text: string, maxLength: number = 500) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
+  };
+
+  // Toggle show full content
+  const toggleContent = () => {
+    setShowFullContent(!showFullContent);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
@@ -110,6 +122,9 @@ const NeedDetail = () => {
       </div>
     );
   }
+
+  const isTextLong = need.cuerpo && need.cuerpo.length > 500;
+  const displayText = showFullContent ? need.cuerpo : truncateText(need.cuerpo || "");
 
   const handleAddRequirement = () => {
     toast({
@@ -148,7 +163,28 @@ const NeedDetail = () => {
         
         {need.cuerpo && (
           <div className="mb-8 bg-white p-6 rounded-lg border">
-            <p className="whitespace-pre-line">{need.cuerpo}</p>
+            <p className="whitespace-pre-line">{displayText}</p>
+            
+            {isTextLong && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={toggleContent} 
+                className="mt-2 text-blue-600"
+              >
+                {showFullContent ? (
+                  <>
+                    <ChevronUp className="h-4 w-4 mr-1" />
+                    Ver menos
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 mr-1" />
+                    Ver más
+                  </>
+                )}
+              </Button>
+            )}
             
             {need.url && (
               <div className="mt-4">
