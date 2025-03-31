@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, CheckCircle2 } from "lucide-react";
-import { useRequirementsExtraction } from "@/hooks/form/ai/useRequirementsExtraction";
+import { useRequirementsExtraction } from "@/hooks/need/ai/useRequirementsExtraction";
 
 interface AIExtractionDialogProps {
   open: boolean;
