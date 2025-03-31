@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -226,14 +225,13 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
                   <div key={param.id} className="space-y-1">
                     <label className="text-sm font-medium">{param.nombre}</label>
                     <Select
-                      value={parametros[param.id] || ''}
+                      value={parametros[param.id] || ""}
                       onValueChange={(value) => handleParametroChange(param.id, value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar" />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* Fixed issue here - changed empty string to a non-empty value */}
                         <SelectItem value="placeholder" disabled>Seleccionar</SelectItem>
                         {param.opciones.map(option => (
                           <SelectItem key={option} value={option}>
