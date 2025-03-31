@@ -27,6 +27,7 @@ const FileUploadField = ({ file, isExtracting, onFileChange }: FileUploadFieldPr
             accept=".pdf"
             className="hidden"
             onChange={onFileChange}
+            id="pdf-upload"
           />
         </label>
       </div>

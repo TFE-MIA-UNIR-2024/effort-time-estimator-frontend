@@ -47,7 +47,9 @@ const NeedForm = ({ projectId, need, onSuccess, onCancel }: NeedFormProps) => {
   });
   
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFileChange(e, text => form.setValue("cuerpo", text));
+    handleFileChange(e, (text: string) => {
+      form.setValue("cuerpo", text);
+    });
   };
 
   return (

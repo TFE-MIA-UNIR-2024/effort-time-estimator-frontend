@@ -31,6 +31,7 @@ export const useNeedFileHandler = () => {
       setIsExtracting(true);
       
       try {
+        console.log("Starting text extraction simulation");
         // Simulating text extraction from PDF
         // In a real app, you would use a PDF parsing library or service
         setTimeout(() => {
@@ -40,6 +41,7 @@ Este es un texto de ejemplo simulando la extracción de contenido de un PDF.
 
 El documento contiene información relevante para el proyecto que puede ser editada según sea necesario.`;
           
+          console.log("Text extracted, calling callback");
           onTextExtracted(extractedText);
           setIsExtracting(false);
           
