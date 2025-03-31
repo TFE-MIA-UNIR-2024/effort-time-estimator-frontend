@@ -34,14 +34,14 @@ const ParameterSelect = ({ id, name, value, options, onChange }: ParameterSelect
           <SelectValue placeholder={`Seleccionar ${name}`} />
         </SelectTrigger>
         <SelectContent>
-          {value && !uniqueOptions.includes(value) && (
-            <SelectItem value={value}>{value}</SelectItem>
-          )}
           {uniqueOptions.map((option) => (
             <SelectItem key={`${id}-${option}`} value={option}>
               {option}
             </SelectItem>
           ))}
+          {value && !uniqueOptions.includes(value) && (
+            <SelectItem value={value}>{value}</SelectItem>
+          )}
         </SelectContent>
       </Select>
     </div>

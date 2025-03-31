@@ -8,6 +8,8 @@ interface ParametersSectionProps {
 }
 
 const ParametersSection = ({ parametros, parametrosFijos, onParametroChange }: ParametersSectionProps) => {
+  console.log("Current parameters:", parametros);
+  
   return (
     <div className="space-y-1">
       <h3 className="text-lg font-semibold mb-3">Parámetros</h3>
