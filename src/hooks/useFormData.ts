@@ -57,12 +57,16 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
 
   const fetchExistingData = async () => {
     try {
+      console.log("Fetching data for requerimiento:", requerimientoId);
+      
       const { data, error } = await supabase
         .from('punto_funcion')
         .select('*')
         .eq('requerimientoid', requerimientoId);
 
       if (error) throw error;
+
+      console.log("Punto funcion data received:", data);
 
       // Set default values for parameters (1-6)
       const defaultParams: Record<number, string> = {
@@ -87,14 +91,17 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
 
         data.forEach(item => {
           if (item.parametro_estimacionid) {
-            // Find matching parameter
+            // For parameters, store the value directly
             paramValues[item.parametro_estimacionid] = String(item.cantidad_estimada);
           }
           if (item.tipo_elemento_afectado_id) {
-            // Store numeric value (even zero)
+            // For elements, store the numeric value
             elemValues[item.tipo_elemento_afectado_id] = item.cantidad_estimada !== null ? Number(item.cantidad_estimada) : 0;
           }
         });
+
+        console.log("Processed parameters:", paramValues);
+        console.log("Processed elements:", elemValues);
 
         setParametros(paramValues);
         setElementos(elemValues);
