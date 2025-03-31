@@ -1,25 +1,26 @@
 
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import ParametersSection from "./ParametersSection";
 import ElementsSection from "./ElementsSection";
-import { TipoParametroEstimacion } from "@/hooks/form/useFormParameters";
 
 interface DialogContentProps {
   loading: boolean;
-  parametros: Record<number, string>;
-  elementos: Record<number, number>;
-  tiposParametros: TipoParametroEstimacion[];
-  elementosFields: { id: number; label: string }[];
-  onParametroChange: (id: number, value: string) => void;
-  onElementChange: (id: number, value: string) => void;
+  parametros: any[];
+  elementos: any[];
+  tiposParametros: any[];
+  elementosFields: any[];
+  onParametroChange: (id: number, value: number) => void;
+  onElementChange: (id: number, value: number) => void;
   onClose: () => void;
   onSave: () => void;
-  dataExists?: boolean;
+  dataExists: boolean;
+  handleGenerateAIEstimation?: () => Promise<void>;
+  aiLoading?: boolean;
 }
 
-const DialogContent = ({
+const DialogContentComponent = ({
   loading,
   parametros,
   elementos,
@@ -29,61 +30,71 @@ const DialogContent = ({
   onElementChange,
   onClose,
   onSave,
-  dataExists = false
+  dataExists,
+  handleGenerateAIEstimation,
+  aiLoading = false
 }: DialogContentProps) => {
+  
+  if (loading) {
+    return (
+      <div className="p-6 flex justify-center items-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-bold">
-          {dataExists 
-            ? "Mantenimiento de parámetros del sistema" 
-            : "Empty Form for Mantenimiento de parámetros del sistema"}
-        </h2>
-        <Button
-          variant="ghost"
-          className="rounded-sm p-0 h-6 w-6"
-          onClick={onClose}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+      <DialogHeader>
+        <DialogTitle className="text-xl">
+          {dataExists ? "Editar Formulario" : "Nuevo Formulario"}
+        </DialogTitle>
+      </DialogHeader>
+
+      <div className="overflow-y-auto max-h-[60vh] pr-2">
+        <ParametersSection
+          parametros={parametros}
+          tiposParametros={tiposParametros}
+          onParametroChange={onParametroChange}
+        />
+        
+        <div className="mt-6 flex justify-between items-center">
+          <h3 className="text-lg font-semibold">Elementos</h3>
+          {handleGenerateAIEstimation && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleGenerateAIEstimation}
+              disabled={aiLoading}
+              className="mb-2"
+            >
+              {aiLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              Estimar esfuerzos con IA
+            </Button>
+          )}
+        </div>
+        
+        <ElementsSection
+          elementos={elementos}
+          elementosFields={elementosFields}
+          onElementChange={onElementChange}
+        />
       </div>
 
-      <ScrollArea className="max-h-[70vh] pr-4">
-        <div className="space-y-6 py-4 px-1">
-          <ParametersSection
-            parametros={parametros}
-            tiposParametros={tiposParametros}
-            onParametroChange={onParametroChange}
-          />
-
-          <ElementsSection
-            elementos={elementos}
-            elementosFields={elementosFields}
-            onElementChange={onElementChange}
-          />
-
-          <div className="flex justify-end pt-2 gap-2">
-            {!dataExists && (
-              <Button 
-                onClick={() => console.log("Estimate with AI clicked")} 
-                variant="outline"
-                className="whitespace-nowrap"
-              >
-                Estimar esfuerzos con IA
-              </Button>
-            )}
-            <Button 
-              onClick={onSave} 
-              disabled={loading}
-              className="bg-black hover:bg-gray-800 text-white"
-            >
-              Save
-            </Button>
-          </div>
-        </div>
-      </ScrollArea>
+      <DialogFooter className="mt-6">
+        <Button variant="outline" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button onClick={onSave}>
+          Guardar
+        </Button>
+      </DialogFooter>
     </>
   );
 };
 
-export default DialogContent;
+export default DialogContentComponent;

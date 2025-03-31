@@ -35,7 +35,9 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
     dataExists,
     handleElementChange,
     handleParametroChange,
-    handleSave
+    handleSave,
+    handleGenerateAIEstimation,
+    aiLoading
   } = useFormData(requerimientoId, open);
 
   const handleFormSave = async () => {
@@ -60,6 +62,8 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
           onClose={() => onOpenChange(false)}
           onSave={handleFormSave}
           dataExists={dataExists}
+          handleGenerateAIEstimation={handleGenerateAIEstimation}
+          aiLoading={aiLoading}
         />
       </DialogContent>
     </Dialog>
