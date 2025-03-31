@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import { ArrowLeft, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import NavBar from "@/components/NavBar";
+import EditFormDialog from "@/components/EditFormDialog";
 
 interface Need {
   necesidadid: number;
@@ -36,19 +36,19 @@ const NeedDetail = () => {
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFullContent, setShowFullContent] = useState(false);
+  const [editFormOpen, setEditFormOpen] = useState(false);
+  const [selectedRequirementId, setSelectedRequirementId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchNeedAndRequirements() {
       try {
         if (!id) return;
         
-        // Convert string id to number for the query
         const numericId = parseInt(id, 10);
         if (isNaN(numericId)) {
           throw new Error("Invalid need ID");
         }
         
-        // Fetch need details
         const { data: needData, error: needError } = await supabase
           .from('necesidad')
           .select('*')
@@ -61,7 +61,6 @@ const NeedDetail = () => {
 
         setNeed(needData);
         
-        // Fetch requirements related to this need
         const { data: reqData, error: reqError } = await supabase
           .from('requerimiento')
           .select('*')
@@ -87,13 +86,11 @@ const NeedDetail = () => {
     fetchNeedAndRequirements();
   }, [id, toast]);
 
-  // Function to truncate text
   const truncateText = (text: string, maxLength: number = 500) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + "...";
   };
 
-  // Toggle show full content
   const toggleContent = () => {
     setShowFullContent(!showFullContent);
   };
@@ -135,6 +132,11 @@ const NeedDetail = () => {
 
   const handleGoBack = () => {
     navigate(`/project/${need.proyectoid}`);
+  };
+
+  const handleEditForm = (requirementId: number) => {
+    setSelectedRequirementId(requirementId);
+    setEditFormOpen(true);
   };
 
   return (
@@ -216,7 +218,11 @@ const NeedDetail = () => {
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleEditForm(req.requerimientoid)}
+                  >
                     Edit Form
                   </Button>
                   <Button variant="outline" size="sm">
@@ -243,6 +249,14 @@ const NeedDetail = () => {
           )}
         </div>
       </main>
+
+      {selectedRequirementId && (
+        <EditFormDialog 
+          open={editFormOpen} 
+          onOpenChange={setEditFormOpen} 
+          requerimientoId={selectedRequirementId} 
+        />
+      )}
     </div>
   );
 };
