@@ -8,6 +8,7 @@ interface NeedHeaderProps {
   onGoBack: () => void;
   onAddRequirement: () => void;
   onExtractRequirements?: () => void;
+  requirementsCount?: number;
 }
 
 const NeedHeader = ({ 
@@ -15,7 +16,8 @@ const NeedHeader = ({
   code, 
   onGoBack, 
   onAddRequirement, 
-  onExtractRequirements 
+  onExtractRequirements,
+  requirementsCount = 0
 }: NeedHeaderProps) => {
   return (
     <>
@@ -35,7 +37,7 @@ const NeedHeader = ({
           <p className="text-gray-600">Code: {code}</p>
         </div>
         <div className="flex space-x-2">
-          {onExtractRequirements && (
+          {onExtractRequirements && requirementsCount === 0 && (
             <Button onClick={onExtractRequirements} variant="outline" className="gap-2">
               <Cpu className="h-4 w-4" />
               Extraer Requerimientos con IA

@@ -12,3 +12,6 @@ export { useAIEstimation } from './useAIEstimation';
 export { useWeightsGenerator } from './ai/useWeightsGenerator';
 export { useRequirementsDetails } from './ai/useRequirementsDetails';
 export { useRequirementsExtraction } from './ai/useRequirementsExtraction';
+
+// Export the new AI requirements extraction hook
+export { useRequirementsExtraction as useAIRequirementsExtraction } from '../need/useRequirementsExtraction';
