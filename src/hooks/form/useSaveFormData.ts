@@ -3,10 +3,11 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Element } from "./types";
+import { useFormParameters } from "./useFormParameters";
 
 interface SaveFormDataParams {
   requerimientoId: number;
-  parametros: any[];
+  parametros: Record<number, string>;
   elementos: Element[];
   dataExists: boolean;
 }
@@ -14,6 +15,7 @@ interface SaveFormDataParams {
 export const useSaveFormData = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { getParameterIdByNameAndType } = useFormParameters();
 
   const handleSave = async ({ requerimientoId, parametros, elementos, dataExists }: SaveFormDataParams) => {
     setLoading(true);
@@ -35,18 +37,26 @@ export const useSaveFormData = () => {
       const inserts = [];
 
       // Process each parameter
-      for (const param of parametros) {
-        if (!param.value) {
-          console.log(`Skipping empty parameter for type ${param.tipo_parametro_estimacionid}`);
+      for (const [tipoParametroId, paramName] of Object.entries(parametros)) {
+        if (!paramName) {
+          console.log(`Skipping empty parameter for type ${tipoParametroId}`);
           continue;
         }
         
-        console.log(`Processing parameter: ${param.value} of type ${param.tipo_parametro_estimacionid}`);
+        // Find the parameter ID for this name and type
+        const parametroId = getParameterIdByNameAndType(paramName, parseInt(tipoParametroId));
+        
+        if (!parametroId) {
+          console.log(`Could not find parameter ID for ${paramName} of type ${tipoParametroId}`);
+          continue;
+        }
+        
+        console.log(`Processing parameter: ${paramName} (ID: ${parametroId}) of type ${tipoParametroId}`);
         
         // Create punto_funcion record for this parameter
         inserts.push({
           requerimientoid: requerimientoId,
-          parametro_estimacionid: param.value,
+          parametro_estimacionid: parametroId,
           cantidad_estimada: 0  // Default value
         });
       }

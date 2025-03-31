@@ -15,9 +15,6 @@ interface ParametersSectionProps {
 }
 
 const ParametersSection = ({ parametros, tiposParametros, onParametroChange }: ParametersSectionProps) => {
-  console.log("Current parameters:", parametros);
-  console.log("Parameter types:", tiposParametros);
-  
   return (
     <div className="space-y-1">
       <h3 className="text-lg font-semibold mb-3">Parámetros</h3>

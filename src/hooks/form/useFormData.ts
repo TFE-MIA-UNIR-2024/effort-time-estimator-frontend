@@ -8,7 +8,7 @@ import { Element } from "./types";
 
 interface FormData {
   loading: boolean;
-  parametros: any[];
+  parametros: Record<number, string>;
   elementos: Element[];
   tiposParametros: any[];
   dataExists: boolean;
@@ -22,13 +22,12 @@ interface FormData {
 export function useFormData(requerimientoId: number, isOpen: boolean): FormData {
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAILoading] = useState(false);
-  const [parametros, setParametros] = useState<any[]>([]);
+  const [parametros, setParametros] = useState<Record<number, string>>({});
   const [elementos, setElementos] = useState<Element[]>([]);
   const [tiposParametros, setTiposParametros] = useState<any[]>([]);
   const [requirement, setRequirement] = useState<any>(null);
   const [dataExists, setDataExists] = useState(false);
   const { toast } = useToast();
-  // Use the hook directly without calling it
   const { handleSave: saveFormDataFn } = useSaveFormData();
   const { generateWeights } = useAIEstimation();
 
@@ -99,20 +98,14 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
       
       if (existingError) throw existingError;
       
-      // Format parameters
-      const initialParametros = tiposData.map((tipo: any) => ({
-        tipo_parametro_estimacionid: tipo.tipo_parametro_estimacionid,
-        nombre: tipo.nombre,
-        haselementosafectados: tipo.haselementosafectados,
-        parametro_estimacion: tipo.parametro_estimacion,
-        value: null
-      }));
+      // Initialize parameters as an empty object
+      const initialParametros: Record<number, string> = {};
       
       // If we have existing data, update parameters with values
       if (existingData && existingData.length > 0) {
         setDataExists(true);
         
-        // Group by parametro_estimacionid
+        // Group by parametro_estimacionid and tipo_elemento_afectado_id
         const groupedByParametro = existingData.reduce((acc: any, item: any) => {
           if (!item.tipo_elemento_afectado_id) {
             acc.parameters[item.parametro_estimacionid] = item;
@@ -125,16 +118,15 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
           return acc;
         }, { parameters: {}, elements: {} });
         
-        // Update parameters with values
-        initialParametros.forEach((param: any) => {
-          for (const selectedParam of param.parametro_estimacion) {
-            const existingParam = groupedByParametro.parameters[selectedParam.parametro_estimacionid];
+        // Process parameters
+        for (const tipoParametro of tiposData || []) {
+          for (const param of tipoParametro.parametro_estimacion) {
+            const existingParam = groupedByParametro.parameters[param.parametro_estimacionid];
             if (existingParam) {
-              param.value = selectedParam.parametro_estimacionid;
-              break;
+              initialParametros[tipoParametro.tipo_parametro_estimacionid] = param.nombre;
             }
           }
-        });
+        }
         
         // Fetch element names for elements that have data
         const elementIds = Object.keys(groupedByParametro.elements).map(Number);
@@ -208,13 +200,10 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
   };
 
   const handleParametroChange = (parametroId: number, value: string) => {
-    setParametros(prev => 
-      prev.map(param => 
-        param.tipo_parametro_estimacionid === parametroId 
-          ? { ...param, value } 
-          : param
-      )
-    );
+    setParametros(prev => ({
+      ...prev,
+      [parametroId]: value
+    }));
   };
 
   const handleSave = async () => {
