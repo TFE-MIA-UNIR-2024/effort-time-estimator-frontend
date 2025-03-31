@@ -1,7 +1,16 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
 import ProjectCard from "./ProjectCard";
+import NewProjectForm from "./NewProjectForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -13,42 +22,63 @@ interface Project {
 const ProjectList = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function fetchProjects() {
-      try {
-        const { data, error } = await supabase
-          .from('proyecto')
-          .select('*');
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('proyecto')
+        .select('*');
 
-        if (error) {
-          throw error;
-        }
-
-        setProjects(data || []);
-      } catch (error) {
-        console.error('Error fetching projects:', error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los proyectos",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+      if (error) {
+        throw error;
       }
-    }
 
+      setProjects(data || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los proyectos",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProjects();
   }, [toast]);
+
+  const handleProjectCreated = () => {
+    setDialogOpen(false);
+    fetchProjects();
+  };
 
   return (
     <div className="py-6 px-4 md:px-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Proyectos</h1>
-        <Button className="bg-blue-700 hover:bg-blue-800">
-          Nuevo Proyecto
-        </Button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-700 hover:bg-blue-800">
+              <Plus className="mr-1 h-5 w-5" />
+              Nuevo Proyecto
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Crear Nuevo Proyecto</DialogTitle>
+            </DialogHeader>
+            <NewProjectForm 
+              onSuccess={handleProjectCreated} 
+              onCancel={() => setDialogOpen(false)} 
+            />
+          </DialogContent>
+        </Dialog>
       </div>
       
       {loading ? (
