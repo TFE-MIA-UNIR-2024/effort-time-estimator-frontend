@@ -11,49 +11,51 @@ export const useNeedFileHandler = () => {
     e: React.ChangeEvent<HTMLInputElement>,
     onTextExtracted?: (text: string) => void
   ) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      if (selectedFile.type !== 'application/pdf') {
-        toast({
-          title: "Error",
-          description: "Solo se permiten archivos PDF",
-          variant: "destructive",
-        });
-        return;
-      }
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-      setFile(selectedFile);
+    const selectedFile = files[0];
+    if (selectedFile.type !== 'application/pdf') {
+      toast({
+        title: "Error",
+        description: "Solo se permiten archivos PDF",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFile(selectedFile);
+    console.log("File selected:", selectedFile.name);
+    
+    if (onTextExtracted) {
+      setIsExtracting(true);
       
-      if (selectedFile.type === 'application/pdf' && onTextExtracted) {
-        setIsExtracting(true);
-        
-        try {
-          // Simulating text extraction from PDF
-          // In a real app, you would use a PDF parsing library or service
-          setTimeout(() => {
-            const extractedText = `Contenido extraído del PDF "${selectedFile.name}". 
-            
+      try {
+        // Simulating text extraction from PDF
+        // In a real app, you would use a PDF parsing library or service
+        setTimeout(() => {
+          const extractedText = `Contenido extraído del PDF "${selectedFile.name}". 
+          
 Este es un texto de ejemplo simulando la extracción de contenido de un PDF.
 
 El documento contiene información relevante para el proyecto que puede ser editada según sea necesario.`;
-            
-            onTextExtracted(extractedText);
-            setIsExtracting(false);
-            
-            toast({
-              title: "Texto extraído",
-              description: "El texto ha sido extraído del PDF correctamente",
-            });
-          }, 1500);
-        } catch (error) {
-          console.error("Error extracting text:", error);
+          
+          onTextExtracted(extractedText);
           setIsExtracting(false);
+          
           toast({
-            title: "Error",
-            description: "No se pudo extraer el texto del PDF",
-            variant: "destructive",
+            title: "Texto extraído",
+            description: "El texto ha sido extraído del PDF correctamente",
           });
-        }
+        }, 1500);
+      } catch (error) {
+        console.error("Error extracting text:", error);
+        setIsExtracting(false);
+        toast({
+          title: "Error",
+          description: "No se pudo extraer el texto del PDF",
+          variant: "destructive",
+        });
       }
     }
   };
