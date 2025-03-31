@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ const AIExtractionDialog = ({
   onSuccess
 }: AIExtractionDialogProps) => {
   const [completed, setCompleted] = useState(false);
-  const { extractRequirements, extracting, progress } = useRequirementsExtraction();
+  const { extractRequirements, isExtracting, progress } = useRequirementsExtraction();
 
   const handleExtract = async () => {
     const result = await extractRequirements(needId, needBody);
@@ -57,7 +58,7 @@ const AIExtractionDialog = ({
                 <CheckCircle2 className="h-12 w-12 text-green-500" />
                 <p className="text-sm text-muted-foreground">Extracción completada</p>
               </div>
-            ) : extracting ? (
+            ) : isExtracting ? (
               <div className="flex flex-col items-center justify-center space-y-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">
@@ -79,16 +80,16 @@ const AIExtractionDialog = ({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={extracting}
+            disabled={isExtracting}
           >
             Cancelar
           </Button>
           <Button
             type="button"
             onClick={handleExtract}
-            disabled={extracting || completed}
+            disabled={isExtracting || completed}
           >
-            {extracting ? "Extrayendo..." : "Extraer Requerimientos"}
+            {isExtracting ? "Extrayendo..." : "Extraer Requerimientos"}
           </Button>
         </div>
       </DialogContent>
