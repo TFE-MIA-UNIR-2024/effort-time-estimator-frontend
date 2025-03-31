@@ -55,13 +55,24 @@ export function useAIEstimationHandler(
         title: "Éxito",
         description: "Esfuerzos estimados con IA",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating AI estimation:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo generar la estimación con IA",
-        variant: "destructive",
-      });
+      
+      // Check for specific error messages
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes("API key not found")) {
+        toast({
+          title: "Error de configuración",
+          description: "No se ha configurado la clave de API de OpenAI. Contacte al administrador del sistema.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo generar la estimación con IA",
+          variant: "destructive",
+        });
+      }
     } finally {
       setAILoading(false);
     }
