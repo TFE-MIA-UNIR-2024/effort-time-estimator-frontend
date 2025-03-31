@@ -39,6 +39,7 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
     loading,
     parametros,
     elementos,
+    dataExists,
     handleElementChange,
     handleParametroChange,
     handleSave
@@ -64,6 +65,7 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
           onElementChange={handleElementChange}
           onClose={() => onOpenChange(false)}
           onSave={handleFormSave}
+          dataExists={dataExists}
         />
       </DialogContent>
     </Dialog>

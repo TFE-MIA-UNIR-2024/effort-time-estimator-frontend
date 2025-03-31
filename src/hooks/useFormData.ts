@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -20,6 +21,7 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
   const [elementos, setElementos] = useState<Record<number, number>>({});
   const [parametrosDB, setParametrosDB] = useState<ParametroEstimacion[]>([]);
   const [elementosDB, setElementosDB] = useState<TipoElementoAfectado[]>([]);
+  const [dataExists, setDataExists] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -62,9 +64,26 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
 
       if (error) throw error;
 
+      // Set default values for parameters (1-6)
+      const defaultParams: Record<number, string> = {
+        1: "Funcional", // Tipo Función
+        2: "Nuevo",     // Nuevo/Modificación
+        3: "Baja",      // Complejidad
+        4: "Interno",   // Tipo de Desarrollo
+        5: "Web",       // Arquitectura
+        6: "Java",      // Lenguajes
+      };
+
+      // Set default values for elements (all zeros)
+      const defaultElems: Record<number, number> = {};
+      for (let i = 1; i <= 13; i++) {
+        defaultElems[i] = 0;
+      }
+
       if (data && data.length > 0) {
-        const paramValues: Record<number, string> = {};
-        const elemValues: Record<number, number> = {};
+        setDataExists(true);
+        const paramValues: Record<number, string> = { ...defaultParams };
+        const elemValues: Record<number, number> = { ...defaultElems };
 
         data.forEach(item => {
           if (item.parametro_estimacionid) {
@@ -79,9 +98,31 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
 
         setParametros(paramValues);
         setElementos(elemValues);
+      } else {
+        // No data exists, set default values
+        setDataExists(false);
+        setParametros(defaultParams);
+        setElementos(defaultElems);
       }
     } catch (error) {
       console.error('Error fetching existing data:', error);
+      // In case of error, still set default values
+      const defaultParams: Record<number, string> = {
+        1: "Funcional",
+        2: "Nuevo",
+        3: "Baja",
+        4: "Interno",
+        5: "Web",
+        6: "Java",
+      };
+      
+      const defaultElems: Record<number, number> = {};
+      for (let i = 1; i <= 13; i++) {
+        defaultElems[i] = 0;
+      }
+      
+      setParametros(defaultParams);
+      setElementos(defaultElems);
     }
   };
 
@@ -162,6 +203,7 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
         title: "Éxito",
         description: "Formulario guardado correctamente",
       });
+      setDataExists(true);
       return true;
     } catch (error) {
       console.error('Error saving form:', error);
@@ -182,6 +224,7 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
     elementos,
     parametrosDB,
     elementosDB,
+    dataExists,
     handleElementChange,
     handleParametroChange,
     handleSave

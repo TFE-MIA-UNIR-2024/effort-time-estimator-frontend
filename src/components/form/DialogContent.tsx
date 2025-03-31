@@ -15,6 +15,7 @@ interface DialogContentProps {
   onElementChange: (id: number, value: string) => void;
   onClose: () => void;
   onSave: () => void;
+  dataExists?: boolean;
 }
 
 const DialogContent = ({
@@ -26,13 +27,16 @@ const DialogContent = ({
   onParametroChange,
   onElementChange,
   onClose,
-  onSave
+  onSave,
+  dataExists = false
 }: DialogContentProps) => {
   return (
     <>
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-bold">
-          Mantenimiento de parámetros del sistema
+          {dataExists 
+            ? "Mantenimiento de parámetros del sistema" 
+            : "Empty Form for Mantenimiento de parámetros del sistema"}
         </h2>
         <Button
           variant="ghost"
@@ -57,13 +61,22 @@ const DialogContent = ({
             onElementChange={onElementChange}
           />
 
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end pt-2 gap-2">
+            {!dataExists && (
+              <Button 
+                onClick={() => console.log("Estimate with AI clicked")} 
+                variant="outline"
+                className="whitespace-nowrap"
+              >
+                Estimar esfuerzos con IA
+              </Button>
+            )}
             <Button 
               onClick={onSave} 
               disabled={loading}
               className="bg-black hover:bg-gray-800 text-white"
             >
-              Guardar
+              Save
             </Button>
           </div>
         </div>
