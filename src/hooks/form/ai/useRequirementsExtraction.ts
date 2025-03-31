@@ -18,147 +18,155 @@ export const useRequirementsExtraction = () => {
   };
 
   async function getRequirementsTitles(prompt: string) {
-    const apiKey = "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"
-    
-    // Check if API key is defined
-    if (!apiKey) {
-      throw new Error("API key not found. Please set the VITE_API_KEY environment variable.");
-    }
-    
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini-2024-07-18",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an expert at structured data extraction. You will be given unstructured text from a research paper and should convert it into the given structure. Extract at least 10-20 titles.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "titles_with_descriptions",
-            schema: {
-              type: "object",
-              properties: {
-                items: {
-                  type: "array",
+    try {
+      // Check if API key is defined
+      if (!import.meta.env.VITE_OPENAI_API_KEY) {
+        throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
+      }
+      
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini-2024-07-18",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an expert at structured data extraction. You will be given unstructured text from a research paper and should convert it into the given structure. Extract at least 10-20 titles.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "titles_with_descriptions",
+              schema: {
+                type: "object",
+                properties: {
                   items: {
-                    type: "object",
-                    properties: {
-                      title: { type: "string" },
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                      },
+                      required: ["title"],
+                      additionalProperties: false,
                     },
-                    required: ["title"],
-                    additionalProperties: false,
                   },
                 },
+                required: ["items"],
+                additionalProperties: false,
               },
-              required: ["items"],
-              additionalProperties: false,
+              strict: true,
             },
-            strict: true,
           },
-        },
-      }),
-    });
+        }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error(errorData);
-      throw new Error(`Error en la API de OpenAI: ${response.statusText}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("OpenAI API Error:", errorData);
+        throw new Error(`Error en la API de OpenAI: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("Titles response:", data);
+
+      // Ensure the response contains the expected content
+      if (
+        !data.choices ||
+        !data.choices[0] ||
+        !data.choices[0].message ||
+        !data.choices[0].message.content
+      ) {
+        throw new Error("Respuesta inesperada de la API de OpenAI.");
+      }
+
+      const parsed = JSON.parse(data.choices[0].message.content);
+      return parsed.items;
+    } catch (error) {
+      console.error("Error getting requirement titles:", error);
+      throw error;
     }
-
-    const data = await response.json();
-    console.log("Titles response:", data);
-
-    // Asegúrate de que la respuesta contenga el contenido esperado
-    if (
-      !data.choices ||
-      !data.choices[0] ||
-      !data.choices[0].message ||
-      !data.choices[0].message.content
-    ) {
-      throw new Error("Respuesta inesperada de la API de OpenAI.");
-    }
-
-    const parsed = JSON.parse(data.choices[0].message.content);
-    return parsed.items;
   }
 
   async function getRequirementDescription(
     title: string,
     completeDocument: string
   ): Promise<string> {
-    const apiKey = "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"
-    
-    // Check if API key is defined
-    if (!apiKey) {
-      throw new Error("API key not found. Please set the VITE_API_KEY environment variable.");
+    try {
+      // Check if API key is defined
+      if (!import.meta.env.VITE_OPENAI_API_KEY) {
+        throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
+      }
+      
+      const prompt = `
+        Eres un experto en extracción de datos estructurados.
+        Se te proporcionará un título y un documento completo.
+        Además, debes considerar que este título es uno de al menos 20 títulos extraídos previamente del mismo documento.
+
+        A partir de esto, genera una descripción detallada para el título proporcionado.
+
+        Título:
+        "${title}"
+
+        Documento completo:
+        ${completeDocument}
+
+        La descripción debe ser clara, concisa y cubrir todos los aspectos relevantes del título basado en la información del documento.
+        Asegúrate de mantener la coherencia con las descripciones de los otros títulos extraídos.
+      `;
+
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini", 
+          messages: [
+            {
+              role: "system",
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("OpenAI API Error:", errorData);
+        throw new Error(`Error en la API de OpenAI: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Ensure the response contains the expected content
+      if (
+        !data.choices ||
+        !data.choices[0] ||
+        !data.choices[0].message ||
+        !data.choices[0].message.content
+      ) {
+        throw new Error("Respuesta inesperada de la API de OpenAI.");
+      }
+
+      const description = data.choices[0].message.content.trim();
+      return description;
+    } catch (error) {
+      console.error("Error getting requirement description:", error);
+      throw error;
     }
-    
-    const prompt = `
-      Eres un experto en extracción de datos estructurados.
-      Se te proporcionará un título y un documento completo.
-      Además, debes considerar que este título es uno de al menos 20 títulos extraídos previamente del mismo documento.
-
-      A partir de esto, genera una descripción detallada para el título proporcionado.
-
-      Título:
-      "${title}"
-
-      Documento completo:
-      ${completeDocument}
-
-      La descripción debe ser clara, concisa y cubrir todos los aspectos relevantes del título basado en la información del documento.
-      Asegúrate de mantener la coherencia con las descripciones de los otros títulos extraídos.
-    `;
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini", 
-        messages: [
-          {
-            role: "system",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error en la API de OpenAI: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    // Asegúrate de que la respuesta contenga el contenido esperado
-    if (
-      !data.choices ||
-      !data.choices[0] ||
-      !data.choices[0].message ||
-      !data.choices[0].message.content
-    ) {
-      throw new Error("Respuesta inesperada de la API de OpenAI.");
-    }
-
-    const description = data.choices[0].message.content.trim();
-    return description;
   }
 
   const extractRequirements = async (
@@ -168,6 +176,11 @@ export const useRequirementsExtraction = () => {
     try {
       setExtracting(true);
       setProgress(0);
+      
+      // Check if API key is defined
+      if (!import.meta.env.VITE_OPENAI_API_KEY) {
+        throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
+      }
       
       // Get titles from the document
       const titles = await getRequirementsTitles(needBody);
