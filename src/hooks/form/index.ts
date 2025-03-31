@@ -11,3 +11,4 @@ export { useAIEstimationHandler } from './useAIEstimationHandler';
 export { useAIEstimation } from './useAIEstimation';
 export { useWeightsGenerator } from './ai/useWeightsGenerator';
 export { useRequirementsDetails } from './ai/useRequirementsDetails';
+export { useRequirementsExtraction } from './ai/useRequirementsExtraction';

@@ -9,14 +9,16 @@ import NeedHeader from "@/components/need/NeedHeader";
 import NeedContent from "@/components/need/NeedContent";
 import RequirementsList from "@/components/requirement/RequirementsList";
 import { useNeedDetail } from "@/hooks/useNeedDetail";
+import AIExtractionDialog from "@/components/requirement/AIExtractionDialog";
 
 const NeedDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { need, requirements, loading } = useNeedDetail(id);
+  const { need, requirements, loading, refetchRequirements } = useNeedDetail(id);
   const [editFormOpen, setEditFormOpen] = useState(false);
   const [realQuantityOpen, setRealQuantityOpen] = useState(false);
+  const [aiExtractionOpen, setAiExtractionOpen] = useState(false);
   const [selectedRequirementId, setSelectedRequirementId] = useState<number | null>(null);
 
   const handleAddRequirement = () => {
@@ -24,6 +26,18 @@ const NeedDetail = () => {
       title: "Función no implementada",
       description: "La función para agregar requerimientos está pendiente de implementar",
     });
+  };
+
+  const handleExtractRequirements = () => {
+    if (!need || !need.cuerpo) {
+      toast({
+        title: "Error",
+        description: "La necesidad no tiene contenido para extraer requerimientos",
+        variant: "destructive",
+      });
+      return;
+    }
+    setAiExtractionOpen(true);
   };
 
   const handleGoBack = () => {
@@ -79,6 +93,8 @@ const NeedDetail = () => {
     );
   }
 
+  const showExtractButton = requirements.length === 0 && need.cuerpo;
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <NavBar />
@@ -88,6 +104,7 @@ const NeedDetail = () => {
           code={need.codigonecesidad}
           onGoBack={handleGoBack}
           onAddRequirement={handleAddRequirement}
+          onExtractRequirements={showExtractButton ? handleExtractRequirements : undefined}
         />
         
         {need.cuerpo && (
@@ -116,6 +133,16 @@ const NeedDetail = () => {
             requerimientoId={selectedRequirementId}
           />
         </>
+      )}
+
+      {need && (
+        <AIExtractionDialog
+          open={aiExtractionOpen}
+          onOpenChange={setAiExtractionOpen}
+          needId={need.necesidadid.toString()}
+          needBody={need.cuerpo || ""}
+          onSuccess={refetchRequirements}
+        />
       )}
     </div>
   );

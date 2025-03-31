@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -26,6 +26,7 @@ interface UseNeedDetailReturn {
   need: Need | null;
   requirements: Requirement[];
   loading: boolean;
+  refetchRequirements: () => Promise<void>;
 }
 
 export const useNeedDetail = (needId: string | undefined): UseNeedDetailReturn => {
@@ -33,6 +34,33 @@ export const useNeedDetail = (needId: string | undefined): UseNeedDetailReturn =
   const [need, setNeed] = useState<Need | null>(null);
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const fetchRequirements = useCallback(async (numericNeedId: number) => {
+    try {
+      const { data: reqData, error: reqError } = await supabase
+        .from('requerimiento')
+        .select('*')
+        .eq('necesidadid', numericNeedId);
+
+      if (reqError) {
+        throw reqError;
+      }
+
+      setRequirements(reqData || []);
+    } catch (error) {
+      console.error('Error fetching requirements:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los requerimientos",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
+  const refetchRequirements = useCallback(async () => {
+    if (!need) return;
+    await fetchRequirements(need.necesidadid);
+  }, [need, fetchRequirements]);
 
   useEffect(() => {
     async function fetchNeedAndRequirements() {
@@ -56,16 +84,7 @@ export const useNeedDetail = (needId: string | undefined): UseNeedDetailReturn =
 
         setNeed(needData);
         
-        const { data: reqData, error: reqError } = await supabase
-          .from('requerimiento')
-          .select('*')
-          .eq('necesidadid', numericId);
-
-        if (reqError) {
-          throw reqError;
-        }
-
-        setRequirements(reqData || []);
+        await fetchRequirements(numericId);
       } catch (error) {
         console.error('Error fetching need details:', error);
         toast({
@@ -79,7 +98,7 @@ export const useNeedDetail = (needId: string | undefined): UseNeedDetailReturn =
     }
 
     fetchNeedAndRequirements();
-  }, [needId, toast]);
+  }, [needId, toast, fetchRequirements]);
 
-  return { need, requirements, loading };
+  return { need, requirements, loading, refetchRequirements };
 };
