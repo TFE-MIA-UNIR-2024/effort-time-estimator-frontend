@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ParametroEstimacion {
   parametro_estimacionid: number;
@@ -67,7 +67,6 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
 
   const fetchParametrosYElementos = async () => {
     try {
-      // Fetch parametros_estimacion
       const { data: parametrosData, error: parametrosError } = await supabase
         .from('parametro_estimacion')
         .select('*');
@@ -75,7 +74,6 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
       if (parametrosError) throw parametrosError;
       setParametrosDB(parametrosData || []);
 
-      // Fetch tipo_elemento_afectado
       const { data: elementosData, error: elementosError } = await supabase
         .from('tipo_elemento_afectado')
         .select('*');
@@ -94,7 +92,6 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
 
   const fetchExistingData = async () => {
     try {
-      // Fetch existing punto_funcion records for this requirement
       const { data, error } = await supabase
         .from('punto_funcion')
         .select('*')
@@ -103,7 +100,6 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // Process parameter values
         const paramValues: Record<number, string> = {};
         const elemValues: Record<number, number> = {};
 
@@ -141,7 +137,6 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
   const handleSave = async () => {
     setLoading(true);
     try {
-      // First delete existing records for this requirement
       const { error: deleteError } = await supabase
         .from('punto_funcion')
         .delete()
@@ -149,10 +144,8 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
 
       if (deleteError) throw deleteError;
 
-      // Prepare records for insertion
       const records = [];
 
-      // Add parametro_estimacion records
       for (const [paramId, value] of Object.entries(parametros)) {
         if (value) {
           records.push({
@@ -164,7 +157,6 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
         }
       }
 
-      // Add elemento_afectado records
       for (const [elemId, cantidad] of Object.entries(elementos)) {
         if (cantidad > 0) {
           records.push({
@@ -201,22 +193,19 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
     }
   };
 
-  // Group the elementos fields into pairs for layout
-  const elementosPairs = [];
-  for (let i = 0; i < elementosFields.length; i += 2) {
-    if (i + 1 < elementosFields.length) {
-      elementosPairs.push([elementosFields[i], elementosFields[i + 1]]);
-    } else {
-      elementosPairs.push([elementosFields[i]]);
-    }
+  const elementosGroups = [];
+  const itemsPerGroup = Math.ceil(elementosFields.length / 3);
+  
+  for (let i = 0; i < elementosFields.length; i += itemsPerGroup) {
+    elementosGroups.push(elementosFields.slice(i, i + itemsPerGroup));
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">
-            Edit Form for Mantenimiento de parámetros del sistema
+            Mantenimiento de parámetros del sistema
           </DialogTitle>
           <Button
             variant="ghost"
@@ -227,12 +216,12 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
           </Button>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Parámetros dropdowns section */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              {parametrosFijos.map((param, index) => (
-                index < 6 && (
+        <ScrollArea className="max-h-[70vh] pr-4">
+          <div className="space-y-6 py-4 px-1">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold mb-3">Parámetros</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {parametrosFijos.map((param) => (
                   <div key={param.id} className="space-y-1">
                     <label className="text-sm font-medium">{param.nombre}</label>
                     <Select
@@ -243,6 +232,7 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
                         <SelectValue placeholder="Seleccionar" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="" disabled>Seleccionar</SelectItem>
                         {param.opciones.map(option => (
                           <SelectItem key={option} value={option}>
                             {option}
@@ -251,42 +241,44 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
                       </SelectContent>
                     </Select>
                   </div>
-                )
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Elementos afectados section */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Elementos afectados</h3>
-            
-            {elementosPairs.map((pair, pairIndex) => (
-              <div key={pairIndex} className="grid grid-cols-2 gap-4">
-                {pair.map(elemento => (
-                  <div key={elemento.id} className="space-y-1">
-                    <label className="text-sm font-medium">{elemento.label}</label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={elementos[elemento.id] || ''}
-                      onChange={(e) => handleElementChange(elemento.id, e.target.value)}
-                    />
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Elementos afectados</h3>
+              
+              <div className="grid grid-cols-3 gap-x-4 gap-y-2">
+                {elementosGroups.map((group, groupIndex) => (
+                  <div key={groupIndex} className="space-y-2">
+                    {group.map(elemento => (
+                      <div key={elemento.id} className="space-y-1">
+                        <label className="text-sm font-medium block">{elemento.label}</label>
+                        <Input
+                          type="number"
+                          min="0"
+                          className="h-8"
+                          value={elementos[elemento.id] || ''}
+                          onChange={(e) => handleElementChange(elemento.id, e.target.value)}
+                        />
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
-            ))}
-          </div>
+            </div>
 
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleSave} 
-              disabled={loading}
-              className="bg-black hover:bg-gray-800 text-white"
-            >
-              Save
-            </Button>
+            <div className="flex justify-end pt-2">
+              <Button 
+                onClick={handleSave} 
+                disabled={loading}
+                className="bg-black hover:bg-gray-800 text-white"
+              >
+                Guardar
+              </Button>
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
