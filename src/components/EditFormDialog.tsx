@@ -106,15 +106,16 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
 
         data.forEach(item => {
           if (item.parametro_estimacionid) {
-            // Find matching parameter from database
-            const parametroInfo = parametrosFijos.find(p => p.id === item.parametro_estimacionid);
-            if (parametroInfo) {
-              paramValues[item.parametro_estimacionid] = item.cantidad_estimada || parametroInfo.opciones[0] || "";
+            // Find matching parameter from fixed parameters
+            const paramIndex = parametrosFijos.findIndex(p => p.id === item.parametro_estimacionid);
+            if (paramIndex !== -1) {
+              const value = item.cantidad_estimada ? String(item.cantidad_estimada) : parametrosFijos[paramIndex].opciones[0];
+              paramValues[item.parametro_estimacionid] = value;
             }
           }
           if (item.tipo_elemento_afectado_id) {
-            // Make sure to store 0 as 0, not as empty string
-            elemValues[item.tipo_elemento_afectado_id] = item.cantidad_estimada || 0;
+            // Store numeric value (even zero)
+            elemValues[item.tipo_elemento_afectado_id] = item.cantidad_estimada !== null ? Number(item.cantidad_estimada) : 0;
           }
         });
 
@@ -156,15 +157,15 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
         if (value) {
           records.push({
             requerimientoid: requerimientoId,
-            parametro_estimacionid: parseInt(value),
-            cantidad_estimada: null,
+            parametro_estimacionid: parseInt(paramId),
+            cantidad_estimada: value,
             tipo_elemento_afectado_id: null
           });
         }
       }
 
       for (const [elemId, cantidad] of Object.entries(elementos)) {
-        if (cantidad > 0) {
+        if (cantidad >= 0) { // Changed from `cantidad > 0` to include zero values
           records.push({
             requerimientoid: requerimientoId,
             tipo_elemento_afectado_id: parseInt(elemId),
@@ -231,14 +232,13 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
                   <div key={param.id} className="space-y-1">
                     <label className="text-sm font-medium">{param.nombre}</label>
                     <Select
-                      value={parametros[param.id] || ""}
+                      value={parametros[param.id] || param.opciones[0]}
                       onValueChange={(value) => handleParametroChange(param.id, value)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar" />
+                        <SelectValue placeholder={param.opciones[0]} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="placeholder" disabled>Seleccionar</SelectItem>
                         {param.opciones.map(option => (
                           <SelectItem key={option} value={option}>
                             {option}
@@ -264,7 +264,7 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
                           type="number"
                           min="0"
                           className="h-8"
-                          value={elementos[elemento.id] !== undefined ? elementos[elemento.id] : ''}
+                          value={elementos[elemento.id] !== undefined ? elementos[elemento.id] : 0}
                           onChange={(e) => handleElementChange(elemento.id, e.target.value)}
                         />
                       </div>
