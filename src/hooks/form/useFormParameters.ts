@@ -13,6 +13,13 @@ export interface ParametroEstimacion {
   fecha_de_creacion?: string;
 }
 
+export interface TipoParametroEstimacion {
+  tipo_parametro_estimacionid: number;
+  nombre: string;
+  haselementosafectados: boolean;
+  parametro_estimacion: ParametroEstimacion[];
+}
+
 export interface ElementoAfectado {
   tipo_elemento_afectadoid: number;
   nombre: string;
@@ -22,6 +29,7 @@ export interface ElementoAfectado {
 
 export const useFormParameters = () => {
   const [loading, setLoading] = useState(true);
+  const [parametrosGrouped, setParametrosGrouped] = useState<TipoParametroEstimacion[]>([]);
   const [parametrosDB, setParametrosDB] = useState<ParametroEstimacion[]>([]);
   const [elementosDB, setElementosDB] = useState<ElementoAfectado[]>([]);
   const [parametersMap, setParametersMap] = useState<Map<string, number>>(new Map());
@@ -30,7 +38,29 @@ export const useFormParameters = () => {
   const fetchParametrosYElementos = async () => {
     setLoading(true);
     try {
-      // Fetch parameters
+      // Fetch parameters with their types
+      const { data: tiposParametros, error: tiposError } = await supabase
+        .from('tipo_parametro_estimacion')
+        .select(`
+          tipo_parametro_estimacionid,
+          nombre,
+          haselementosafectados,
+          parametro_estimacion (
+            parametro_estimacionid,
+            nombre,
+            tipo_parametro_estimacionid,
+            descripcion,
+            factor,
+            factor_ia,
+            pesofactor,
+            fecha_de_creacion
+          )
+        `)
+        .eq('fase_proyectoid', 2);
+      
+      if (tiposError) throw tiposError;
+
+      // Fetch all parameters separately for the flat list
       const { data: parametros, error: parametrosError } = await supabase
         .from('parametro_estimacion')
         .select('*')
@@ -47,7 +77,10 @@ export const useFormParameters = () => {
 
       if (elementosError) throw elementosError;
 
-      // Set the data
+      // Set the grouped data
+      setParametrosGrouped(tiposParametros || []);
+      
+      // Set the flat data
       setParametrosDB(parametros || []);
       setElementosDB(elementos || []);
       
@@ -61,6 +94,7 @@ export const useFormParameters = () => {
       
       console.log("Parameters fetched:", parametros?.length || 0);
       console.log("Elements fetched:", elementos?.length || 0);
+      console.log("Parameter types fetched:", tiposParametros?.length || 0);
     } catch (error) {
       console.error('Error fetching parameters:', error);
     } finally {
@@ -107,6 +141,7 @@ export const useFormParameters = () => {
   return {
     loading,
     parametrosDB,
+    parametrosGrouped,
     elementosDB,
     fetchParametrosYElementos,
     getTypeForParameter,

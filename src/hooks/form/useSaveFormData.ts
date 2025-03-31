@@ -31,15 +31,11 @@ export const useSaveFormData = (
       if (deleteError) throw deleteError;
       console.log("Deleted existing punto_funcion records");
 
-      // Process each parameter by type (1-6)
-      const parameterEntries = Object.entries(parametros);
-      console.log("Parameter entries to process:", parameterEntries);
-      
       // Prepare an array to store all inserts
       const inserts = [];
 
       // Process each parameter
-      for (const [typeIdStr, paramName] of parameterEntries) {
+      for (const [typeIdStr, paramName] of Object.entries(parametros)) {
         const typeId = parseInt(typeIdStr);
         
         if (!paramName || paramName.trim() === '') {

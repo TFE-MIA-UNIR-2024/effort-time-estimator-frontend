@@ -11,6 +11,7 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
   const { 
     loading: parametersLoading, 
     parametrosDB, 
+    parametrosGrouped,
     elementosDB, 
     fetchParametrosYElementos,
     getTypeForParameter,
@@ -103,9 +104,9 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
         // Create default empty parameters
         const paramValues: Record<number, string> = {};
         // Default to empty strings for all parameter types
-        for (let i = 1; i <= 6; i++) {
-          paramValues[i] = "";
-        }
+        parametrosGrouped.forEach(tipo => {
+          paramValues[tipo.tipo_parametro_estimacionid] = "";
+        });
         
         setParametros(paramValues);
         setElementos(defaultElems);
@@ -127,9 +128,9 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
       // Create default empty parameters
       const paramValues: Record<number, string> = {};
       // Default to empty strings for all parameter types
-      for (let i = 1; i <= 6; i++) {
-        paramValues[i] = "";
-      }
+      parametrosGrouped.forEach(tipo => {
+        paramValues[tipo.tipo_parametro_estimacionid] = "";
+      });
       
       setParametros(paramValues);
       setElementos(defaultElems);
@@ -169,6 +170,7 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
     parametros,
     elementos,
     parametrosDB,
+    tiposParametros: parametrosGrouped,
     elementosDB,
     dataExists,
     handleElementChange,

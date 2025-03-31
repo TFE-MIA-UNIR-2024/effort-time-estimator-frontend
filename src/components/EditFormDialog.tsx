@@ -9,16 +9,7 @@ interface EditFormProps {
   requerimientoId: number;
 }
 
-// Define default parameter options with their proper categories
-const defaultParametrosFijos = [
-  { id: 1, nombre: "Tipo Función", opciones: ["Funcional", "No Funcional", "Técnico"] },
-  { id: 2, nombre: "Nuevo/Modificacion", opciones: ["Nuevo", "Modificacion"] },
-  { id: 3, nombre: "Complejidad", opciones: ["Baja", "Media", "Alta"] },
-  { id: 4, nombre: "Tipo de Desarrollo", opciones: ["Interno", "Externo", "Mixto"] },
-  { id: 5, nombre: "Arquitectura", opciones: ["Web", "Desktop", "Mobile", "Hibrida"] },
-  { id: 6, nombre: "Lenguajes", opciones: ["Java", "PHP", "C#", "Python", "Fame"] },
-];
-
+// Define the elementosFields that will be displayed in the form
 const elementosFields = [
   { id: 1, label: "Tablas" },
   { id: 2, label: "Triggers/SP" },
@@ -40,67 +31,12 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
     loading,
     parametros,
     elementos,
-    parametrosDB,
+    tiposParametros,
     dataExists,
     handleElementChange,
     handleParametroChange,
     handleSave
   } = useFormData(requerimientoId, open);
-
-  // Create the parameter options from the database with proper categorization
-  const createParameterOptionsFromDB = () => {
-    // Group parameters by tipo_parametro_estimacionid (1-6)
-    const groupedParams: Record<number, { id: number, nombre: string, opciones: string[] }> = {};
-    
-    // First, initialize with defaults
-    defaultParametrosFijos.forEach(param => {
-      groupedParams[param.id] = { ...param, opciones: [] };
-    });
-    
-    // Find parameters in the database for each type and organize them correctly
-    if (parametrosDB && parametrosDB.length > 0) {
-      parametrosDB.forEach(param => {
-        const tipoId = param.tipo_parametro_estimacionid;
-        if (tipoId >= 1 && tipoId <= 6) {
-          // If we don't already have this type, create it
-          if (!groupedParams[tipoId]) {
-            groupedParams[tipoId] = {
-              id: tipoId,
-              nombre: defaultParametrosFijos.find(p => p.id === tipoId)?.nombre || `Tipo ${tipoId}`,
-              opciones: []
-            };
-          }
-          
-          // Add this parameter's name as an option if not already there
-          if (!groupedParams[tipoId].opciones.includes(param.nombre)) {
-            groupedParams[tipoId].opciones.push(param.nombre);
-          }
-        }
-      });
-    }
-    
-    // Sort options alphabetically within each category
-    Object.keys(groupedParams).forEach(key => {
-      const keyNum = parseInt(key);
-      groupedParams[keyNum].opciones.sort();
-    });
-    
-    // Add default options if no options are found in the DB for a category
-    Object.keys(groupedParams).forEach(key => {
-      const keyNum = parseInt(key);
-      if (groupedParams[keyNum].opciones.length === 0) {
-        const defaultParam = defaultParametrosFijos.find(p => p.id === keyNum);
-        if (defaultParam) {
-          groupedParams[keyNum].opciones = [...defaultParam.opciones];
-        }
-      }
-    });
-    
-    // Convert the object to an array for rendering
-    return Object.values(groupedParams);
-  };
-
-  const parametrosFijos = createParameterOptionsFromDB();
 
   const handleFormSave = async () => {
     console.log("Saving parameters:", parametros);
@@ -117,7 +53,7 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
           loading={loading}
           parametros={parametros}
           elementos={elementos}
-          parametrosFijos={parametrosFijos}
+          tiposParametros={tiposParametros}
           elementosFields={elementosFields}
           onParametroChange={handleParametroChange}
           onElementChange={handleElementChange}

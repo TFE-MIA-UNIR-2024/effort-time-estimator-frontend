@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import ParametersSection from "./ParametersSection";
 import ElementsSection from "./ElementsSection";
+import { TipoParametroEstimacion } from "@/hooks/form/useFormParameters";
 
 interface DialogContentProps {
   loading: boolean;
   parametros: Record<number, string>;
   elementos: Record<number, number>;
-  parametrosFijos: { id: number; nombre: string; opciones: string[] }[];
+  tiposParametros: TipoParametroEstimacion[];
   elementosFields: { id: number; label: string }[];
   onParametroChange: (id: number, value: string) => void;
   onElementChange: (id: number, value: string) => void;
@@ -22,7 +23,7 @@ const DialogContent = ({
   loading,
   parametros,
   elementos,
-  parametrosFijos,
+  tiposParametros,
   elementosFields,
   onParametroChange,
   onElementChange,
@@ -51,7 +52,7 @@ const DialogContent = ({
         <div className="space-y-6 py-4 px-1">
           <ParametersSection
             parametros={parametros}
-            parametrosFijos={parametrosFijos}
+            tiposParametros={tiposParametros}
             onParametroChange={onParametroChange}
           />
 
