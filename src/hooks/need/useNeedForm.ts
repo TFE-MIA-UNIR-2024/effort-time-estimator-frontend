@@ -48,8 +48,7 @@ export const useNeedForm = ({ projectId, need, onSuccess, onCancel }: UseNeedFor
   const { 
     file, 
     isExtracting, 
-    handleFileChange, 
-    extractTextFromPdf 
+    handleFileChange
   } = useNeedFileHandler();
   
   const { saveNeed } = useNeedStorage();
