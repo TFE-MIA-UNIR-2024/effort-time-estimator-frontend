@@ -193,15 +193,26 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
 
       const records = [];
 
-      // For parametros, store the values (which could be strings)
+      // For parametros, we need to store the parameter ID with the text value
+      // The database expects numeric values for cantidad_estimada
       for (const [paramId, value] of Object.entries(parametros)) {
         if (value) {
-          records.push({
-            requerimientoid: requerimientoId,
-            parametro_estimacionid: parseInt(paramId),
-            cantidad_estimada: value,
-            tipo_elemento_afectado_id: null
-          });
+          // Find the parameter ID from the database that matches this value
+          const matchingParam = parametrosDB.find(p => 
+            p.nombre === value && 
+            p.tipo_parametro_estimacionid === getTypeForParameter(parseInt(paramId))
+          );
+
+          if (matchingParam) {
+            records.push({
+              requerimientoid: requerimientoId,
+              parametro_estimacionid: matchingParam.parametro_estimacionid,
+              cantidad_estimada: 1, // We're storing a numeric value now
+              tipo_elemento_afectado_id: null
+            });
+          } else {
+            console.warn(`Could not find matching parameter for ${value}`);
+          }
         }
       }
 
@@ -243,6 +254,13 @@ export const useFormData = (requerimientoId: number, open: boolean) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to get the type (1-6) for a parameter
+  const getTypeForParameter = (parametroId: number): number => {
+    // Find the parameter in the DB
+    const param = parametrosDB.find(p => p.parametro_estimacionid === parametroId);
+    return param?.tipo_parametro_estimacionid || 0;
   };
 
   return {
