@@ -9,23 +9,6 @@ interface EditFormProps {
   requerimientoId: number;
 }
 
-// Define the elementosFields that will be displayed in the form
-const elementosFields = [
-  { id: 1, label: "Tablas" },
-  { id: 2, label: "Triggers/SP" },
-  { id: 3, label: "Interfaces c/aplicativos" },
-  { id: 4, label: "Formularios" },
-  { id: 5, label: "Subrutinas complejas" },
-  { id: 6, label: "Interfaces con BD" },
-  { id: 7, label: "Reportes" },
-  { id: 8, label: "Componentes" },
-  { id: 9, label: "Javascript" },
-  { id: 10, label: "Componentes Config. y Pruebas" },
-  { id: 11, label: "Despliegue app movil" },
-  { id: 12, label: "QA" },
-  { id: 13, label: "PF" },
-];
-
 const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) => {
   const {
     loading,
@@ -39,6 +22,23 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
     handleGenerateAIEstimation,
     aiLoading
   } = useFormData(requerimientoId, open);
+
+  // Define the elementosFields that will be displayed in the form
+  const elementosFields = [
+    { id: 1, label: "Tablas" },
+    { id: 2, label: "Triggers/SP" },
+    { id: 3, label: "Interfaces c/aplicativos" },
+    { id: 4, label: "Formularios" },
+    { id: 5, label: "Subrutinas complejas" },
+    { id: 6, label: "Interfaces con BD" },
+    { id: 7, label: "Reportes" },
+    { id: 8, label: "Componentes" },
+    { id: 9, label: "Javascript" },
+    { id: 10, label: "Componentes Config. y Pruebas" },
+    { id: 11, label: "Despliegue app movil" },
+    { id: 12, label: "QA" },
+    { id: 13, label: "PF" },
+  ];
 
   const handleFormSave = async () => {
     console.log("Saving parameters:", parametros);
