@@ -31,7 +31,7 @@ export const useSaveFormData = (
       if (deleteError) throw deleteError;
       console.log("Deleted existing punto_funcion records");
 
-      // Create records for each parameter type (1-6)
+      // Process each parameter by type (1-6)
       const parameterEntries = Object.entries(parametros);
       console.log("Parameter entries to process:", parameterEntries);
       

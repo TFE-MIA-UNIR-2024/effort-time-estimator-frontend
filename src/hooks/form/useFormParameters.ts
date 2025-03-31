@@ -7,76 +7,99 @@ export interface ParametroEstimacion {
   nombre: string;
   tipo_parametro_estimacionid: number;
   descripcion?: string;
+  factor?: number;
+  factor_ia?: number;
+  pesofactor?: number;
+  fecha_de_creacion?: string;
 }
 
-export interface TipoElementoAfectado {
+export interface ElementoAfectado {
   tipo_elemento_afectadoid: number;
   nombre: string;
+  factor?: number;
+  factor_ia?: number;
 }
 
 export const useFormParameters = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [parametrosDB, setParametrosDB] = useState<ParametroEstimacion[]>([]);
-  const [elementosDB, setElementosDB] = useState<TipoElementoAfectado[]>([]);
+  const [elementosDB, setElementosDB] = useState<ElementoAfectado[]>([]);
+  const [parametersMap, setParametersMap] = useState<Map<string, number>>(new Map());
 
+  // Function to fetch all parameters and elements
   const fetchParametrosYElementos = async () => {
     setLoading(true);
     try {
-      const { data: parametrosData, error: parametrosError } = await supabase
+      // Fetch parameters
+      const { data: parametros, error: parametrosError } = await supabase
         .from('parametro_estimacion')
-        .select('*');
+        .select('*')
+        .order('nombre');
 
       if (parametrosError) throw parametrosError;
-      console.log("Parametros from DB:", parametrosData);
-      setParametrosDB(parametrosData || []);
 
-      const { data: elementosData, error: elementosError } = await supabase
+      // Fetch elements
+      const { data: elementos, error: elementosError } = await supabase
         .from('tipo_elemento_afectado')
-        .select('*');
+        .select('*')
+        .eq('activo', true)
+        .order('nombre');
 
       if (elementosError) throw elementosError;
-      setElementosDB(elementosData || []);
+
+      // Set the data
+      setParametrosDB(parametros || []);
+      setElementosDB(elementos || []);
+      
+      // Create a map for quick parameter lookup by name and type
+      const paramMap = new Map<string, number>();
+      parametros?.forEach(param => {
+        const key = `${param.nombre}:${param.tipo_parametro_estimacionid}`;
+        paramMap.set(key, param.parametro_estimacionid);
+      });
+      setParametersMap(paramMap);
+      
+      console.log("Parameters fetched:", parametros?.length || 0);
+      console.log("Elements fetched:", elementos?.length || 0);
     } catch (error) {
-      console.error('Error fetching data:', error);
-      return { error };
+      console.error('Error fetching parameters:', error);
     } finally {
       setLoading(false);
     }
-    return { parametrosDB, elementosDB };
   };
 
-  // This function gets the type (1-6) for a parameter
+  // Get the type for a parameter based on its ID
   const getTypeForParameter = (parametroId: number): number => {
-    // If parametroId is already a type id (1-6), return it directly
-    if (parametroId >= 1 && parametroId <= 6) {
-      return parametroId;
-    }
-    
-    // Otherwise, try to find the parameter in the database
     const param = parametrosDB.find(p => p.parametro_estimacionid === parametroId);
-    if (param) {
-      return param.tipo_parametro_estimacionid;
-    }
-    
-    // If we couldn't determine the type, log warning and return a fallback
-    console.warn(`Could not determine type for parameter ID: ${parametroId}`);
-    return 0;
+    return param?.tipo_parametro_estimacionid || 0;
   };
 
-  // This function gets the parametro_estimacionid for a given name and type
+  // Get the parameter ID by name and type
   const getParameterIdByNameAndType = (name: string, typeId: number): number | null => {
-    const param = parametrosDB.find(
-      p => p.nombre === name && p.tipo_parametro_estimacionid === typeId
+    const key = `${name}:${typeId}`;
+    const id = parametersMap.get(key);
+    
+    if (id) {
+      console.log(`Found parameter ID ${id} for ${name} (type ${typeId})`);
+      return id;
+    }
+    
+    // Fallback to linear search if map lookup fails
+    const param = parametrosDB.find(p => 
+      p.nombre === name && 
+      p.tipo_parametro_estimacionid === typeId
     );
     
     if (param) {
+      console.log(`Found parameter ID ${param.parametro_estimacionid} through linear search for ${name} (type ${typeId})`);
       return param.parametro_estimacionid;
     }
     
-    console.warn(`Could not find parameter with name "${name}" and type ${typeId}`);
+    console.log(`Parameter not found for ${name} (type ${typeId})`);
     return null;
   };
 
+  // Initialize component by fetching data
   useEffect(() => {
     fetchParametrosYElementos();
   }, []);
