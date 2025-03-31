@@ -25,10 +25,16 @@ const ProjectDetail = () => {
       try {
         if (!id) return;
         
+        // Convert string id to number for the query
+        const numericId = parseInt(id, 10);
+        if (isNaN(numericId)) {
+          throw new Error("Invalid project ID");
+        }
+        
         const { data, error } = await supabase
           .from('proyecto')
           .select('*')
-          .eq('proyectoid', id)
+          .eq('proyectoid', numericId)
           .single();
 
         if (error) {
@@ -90,14 +96,14 @@ const ProjectDetail = () => {
                 <ArrowLeft className="h-5 w-5 mr-1" />
                 <span>Atrás</span>
               </Button>
-              <h1 className="text-2xl font-bold">{project.nombreproyecto}</h1>
+              <h1 className="text-2xl font-bold">{project?.nombreproyecto}</h1>
             </div>
             <Button variant="outline">Estimaciones</Button>
           </div>
         </div>
         
         <div className="p-6">
-          <NeedsList projectId={Number(id)} />
+          {project && <NeedsList projectId={project.proyectoid} />}
         </div>
       </main>
     </div>
