@@ -9,7 +9,8 @@ interface EditFormProps {
   requerimientoId: number;
 }
 
-const parametrosFijos = [
+// These are just used as fallbacks in case the database doesn't return parameters
+const defaultParametrosFijos = [
   { id: 1, nombre: "Tipo Función", opciones: ["Funcional", "No Funcional", "Técnico"] },
   { id: 2, nombre: "Nuevo/Modificacion", opciones: ["Nuevo", "Modificacion"] },
   { id: 3, nombre: "Complejidad", opciones: ["Baja", "Media", "Alta"] },
@@ -39,11 +40,50 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
     loading,
     parametros,
     elementos,
+    parametrosDB,
     dataExists,
     handleElementChange,
     handleParametroChange,
     handleSave
   } = useFormData(requerimientoId, open);
+
+  // Create the parameter options from the database
+  const createParameterOptionsFromDB = () => {
+    // Group parameters by tipo_parametro_estimacionid (1-6)
+    const groupedParams: Record<number, { id: number, nombre: string, opciones: string[] }> = {};
+    
+    // First, initialize with defaults
+    defaultParametrosFijos.forEach(param => {
+      groupedParams[param.id] = { ...param };
+    });
+    
+    // Find parameters in the database for each type
+    parametrosDB.forEach(param => {
+      const tipoId = param.tipo_parametro_estimacionid;
+      if (tipoId >= 1 && tipoId <= 6) {
+        // If we don't already have this type, create it
+        if (!groupedParams[tipoId]) {
+          groupedParams[tipoId] = {
+            id: param.parametro_estimacionid,
+            nombre: param.nombre,
+            opciones: []
+          };
+        }
+        
+        // Add this parameter's name as an option
+        if (!groupedParams[tipoId].opciones.includes(param.nombre)) {
+          groupedParams[tipoId].opciones.push(param.nombre);
+        }
+      }
+    });
+    
+    // Convert the object to an array for rendering
+    return Object.values(groupedParams);
+  };
+
+  const parametrosFijos = parametrosDB.length > 0 
+    ? createParameterOptionsFromDB() 
+    : defaultParametrosFijos;
 
   const handleFormSave = async () => {
     const success = await handleSave();
