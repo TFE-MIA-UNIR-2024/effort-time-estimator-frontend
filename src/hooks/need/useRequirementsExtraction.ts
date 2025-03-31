@@ -75,7 +75,7 @@ export const useRequirementsExtraction = () => {
   const getRequirementDescription = async (
     title: string,
     completeDocument: string
-  ): Promise<string> {
+  ) => {
     const prompt = `
       Eres un experto en extracción de datos estructurados.
       Se te proporcionará un título y un documento completo.
