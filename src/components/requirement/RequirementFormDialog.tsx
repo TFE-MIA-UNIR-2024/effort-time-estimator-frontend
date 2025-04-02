@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,10 +30,28 @@ const RequirementFormDialog = ({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    nombrerequerimiento: requirement?.nombrerequerimiento || "",
-    codigorequerimiento: requirement?.codigorequerimiento || "",
-    cuerpo: requirement?.cuerpo || ""
+    nombrerequerimiento: "",
+    codigorequerimiento: "",
+    cuerpo: ""
   });
+  
+  // Reset form data when the dialog opens or requirement changes
+  useEffect(() => {
+    if (requirement) {
+      setFormData({
+        nombrerequerimiento: requirement.nombrerequerimiento || "",
+        codigorequerimiento: requirement.codigorequerimiento || "",
+        cuerpo: requirement.cuerpo || ""
+      });
+    } else {
+      // Reset form when adding a new requirement
+      setFormData({
+        nombrerequerimiento: "",
+        codigorequerimiento: "",
+        cuerpo: ""
+      });
+    }
+  }, [requirement, open]);
   
   const isEditing = !!requirement;
 
