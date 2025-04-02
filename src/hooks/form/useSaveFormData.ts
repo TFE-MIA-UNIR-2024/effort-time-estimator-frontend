@@ -61,13 +61,18 @@ export const useSaveFormData = () => {
         });
       }
       
-      // Process each elemento - include all elements even with zero quantity
+      // Process each elemento
       for (const elemento of elementos) {
-        // Create punto_funcion record for this elemento, even if quantity is zero
+        if (elemento.cantidad_estimada <= 0) {
+          console.log(`Skipping elemento ${elemento.elemento_id} with zero or negative quantity`);
+          continue;
+        }
+        
+        // Create punto_funcion record for this elemento
         inserts.push({
           requerimientoid: requerimientoId,
           tipo_elemento_afectado_id: elemento.tipo_elemento_afectado_id || elemento.elemento_id,
-          cantidad_estimada: elemento.cantidad_estimada || 0 // Set at least zero if undefined or null
+          cantidad_estimada: elemento.cantidad_estimada
         });
       }
       

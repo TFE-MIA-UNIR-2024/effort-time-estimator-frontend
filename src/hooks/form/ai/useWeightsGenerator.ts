@@ -5,23 +5,6 @@ import { getPredictions } from "./predictionService";
 // Selected IDs for prediction based on the image example
 const PREDICTION_IDS = [2, 7, 12]; // Triggers/SP, Reportes, QA
 
-// Map element IDs to their labels
-const idToLabel: Record<number, string> = {
-  1: "Tablas",
-  2: "Triggers/SP",
-  3: "Interfaces c/aplicativos",
-  4: "Formularios",
-  5: "Subrutinas complejas",
-  6: "Interfaces con BD",
-  7: "Reportes",
-  8: "Componentes",
-  9: "Javascript",
-  10: "Componentes Config. y Pruebas",
-  11: "Despliegue app movil",
-  12: "QA",
-  13: "PF",
-};
-
 export const generateWeights = async (
   title: string,
   body: string
@@ -44,6 +27,23 @@ export const generateWeights = async (
       "Despliegue app movil": 0,
       QA: 0,
       PF: 0,
+    };
+    
+    // Map element IDs to their labels
+    const idToLabel: Record<number, string> = {
+      1: "Tablas",
+      2: "Triggers/SP",
+      3: "Interfaces c/aplicativos",
+      4: "Formularios",
+      5: "Subrutinas complejas",
+      6: "Interfaces con BD",
+      7: "Reportes",
+      8: "Componentes",
+      9: "Javascript",
+      10: "Componentes Config. y Pruebas",
+      11: "Despliegue app movil",
+      12: "QA",
+      13: "PF",
     };
     
     // Update weights with predicted values
