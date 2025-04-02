@@ -24,17 +24,6 @@ export function useAIEstimationHandler(
       return;
     }
 
-    // Check if API key is defined
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    if (!apiKey) {
-      toast({
-        title: "Error de configuración",
-        description: "No se ha configurado la clave de API de OpenAI. Contacte al administrador del sistema.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setAILoading(true);
     try {
       const weights = await generateWeights(
@@ -69,21 +58,11 @@ export function useAIEstimationHandler(
     } catch (error: any) {
       console.error("Error generating AI estimation:", error);
       
-      // Check for specific error messages
-      const errorMessage = error?.message || '';
-      if (errorMessage.includes("API key not found")) {
-        toast({
-          title: "Error de configuración",
-          description: "No se ha configurado la clave de API de OpenAI. Contacte al administrador del sistema.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "No se pudo generar la estimación con IA",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Error",
+        description: "No se pudo generar la estimación con IA. " + (error?.message || ""),
+        variant: "destructive",
+      });
     } finally {
       setAILoading(false);
     }

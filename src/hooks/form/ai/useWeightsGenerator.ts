@@ -1,33 +1,66 @@
 
-import { DetailItem, WeightFormData } from "../types";
-import { getRequirementsDetails } from "./useRequirementsDetails";
+import { WeightFormData } from "../types";
+import { getPredictions } from "./predictionService";
+
+// Selected IDs for prediction based on the image example
+const PREDICTION_IDS = [2, 7, 12]; // Triggers/SP, Reportes, QA
 
 export const generateWeights = async (
   title: string,
   body: string
 ): Promise<WeightFormData> => {
-  const details = await getRequirementsDetails([{ title }], body);
-
-  if (!details || details.length === 0) {
-    throw new Error("No weights generated");
+  try {
+    const predictionMap = await getPredictions(PREDICTION_IDS);
+    
+    // Create weights object with default values of 0
+    const weights: WeightFormData = {
+      Tablas: 0,
+      "Triggers/SP": 0,
+      "Interfaces c/aplicativos": 0,
+      Formularios: 0,
+      "Subrutinas complejas": 0,
+      "Interfaces con BD": 0,
+      Reportes: 0,
+      Componentes: 0,
+      Javascript: 0,
+      "Componentes Config. y Pruebas": 0,
+      "Despliegue app movil": 0,
+      QA: 0,
+      PF: 0,
+    };
+    
+    // Map element IDs to their labels
+    const idToLabel: Record<number, string> = {
+      1: "Tablas",
+      2: "Triggers/SP",
+      3: "Interfaces c/aplicativos",
+      4: "Formularios",
+      5: "Subrutinas complejas",
+      6: "Interfaces con BD",
+      7: "Reportes",
+      8: "Componentes",
+      9: "Javascript",
+      10: "Componentes Config. y Pruebas",
+      11: "Despliegue app movil",
+      12: "QA",
+      13: "PF",
+    };
+    
+    // Update weights with predicted values
+    Object.entries(predictionMap).forEach(([id, value]) => {
+      const numericId = Number(id);
+      const label = idToLabel[numericId];
+      if (label) {
+        weights[label] = value;
+      }
+    });
+    
+    console.log("Generated weights:", weights);
+    return weights;
+  } catch (error) {
+    console.error("Error generating weights:", error);
+    throw error;
   }
-
-  const weights = details[0];
-  return {
-    Tablas: weights.tablas,
-    "Triggers/SP": weights.triggersSP,
-    "Interfaces c/aplicativos": weights.interfacesAplicativos,
-    Formularios: weights.formularios,
-    "Subrutinas complejas": weights.subrutinasComplejas,
-    "Interfaces con BD": weights.interfacesBD,
-    Reportes: weights.reportes,
-    Componentes: weights.componentes,
-    Javascript: weights.javascript,
-    "Componentes Config. y Pruebas": weights.componentesConfigPruebas,
-    "Despliegue app movil": weights.despliegueAppMovil,
-    QA: weights.qa,
-    PF: weights.pf,
-  };
 };
 
 export const useWeightsGenerator = () => {
