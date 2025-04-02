@@ -20,7 +20,8 @@ const EditFormDialog = ({ open, onOpenChange, requerimientoId }: EditFormProps) 
     handleParametroChange,
     handleSave,
     handleGenerateAIEstimation,
-    aiLoading
+    aiLoading,
+    validateForm
   } = useFormData(requerimientoId, open);
 
   // Define the elementosFields that will be displayed in the form

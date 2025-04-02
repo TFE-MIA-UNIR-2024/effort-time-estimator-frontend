@@ -20,17 +20,25 @@ interface ParameterSelectProps {
 const ParameterSelect = ({ id, name, value, options, onChange }: ParameterSelectProps) => {
   // Ensure options are unique and sorted
   const uniqueOptions = [...new Set(options)].sort();
+  const isInvalid = !value;
   
   return (
     <div className="space-y-2">
-      <label htmlFor={`param-${id}`} className="block text-sm font-medium">
+      <label 
+        htmlFor={`param-${id}`} 
+        className="block text-sm font-medium flex items-center justify-between"
+      >
         {name}
+        <span className="text-destructive text-xs">* Requerido</span>
       </label>
       <Select 
         value={value} 
         onValueChange={(newValue) => onChange(id, newValue)}
       >
-        <SelectTrigger id={`param-${id}`} className="w-full">
+        <SelectTrigger 
+          id={`param-${id}`} 
+          className={`w-full ${isInvalid ? "border-destructive ring-destructive" : ""}`}
+        >
           <SelectValue placeholder={`Seleccionar ${name}`} />
         </SelectTrigger>
         <SelectContent>
@@ -44,6 +52,9 @@ const ParameterSelect = ({ id, name, value, options, onChange }: ParameterSelect
           )}
         </SelectContent>
       </Select>
+      {isInvalid && (
+        <p className="text-xs text-destructive mt-1">Este campo es obligatorio</p>
+      )}
     </div>
   );
 };

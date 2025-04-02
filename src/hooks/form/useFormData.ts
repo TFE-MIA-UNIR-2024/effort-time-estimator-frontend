@@ -19,6 +19,7 @@ interface FormData {
   handleSave: () => Promise<boolean>;
   handleGenerateAIEstimation: () => Promise<void>;
   aiLoading: boolean;
+  validateForm: () => boolean;
 }
 
 // Define the elementosFields that will be used in the form
@@ -68,7 +69,32 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
     }
   }, [loading, fetchedParametros, fetchedElementos, tiposParametros, setParametros, setElementos]);
 
+  // Validate that all required parameters have values
+  const validateForm = () => {
+    // Check if all parameter types have values
+    const missingParameters = tiposParametros.filter(
+      (tipo) => !parametros[tipo.tipo_parametro_estimacionid]
+    );
+
+    if (missingParameters.length > 0) {
+      const missingNames = missingParameters.map(p => p.nombre).join(", ");
+      toast({
+        title: "Validación",
+        description: `Por favor seleccione valores para: ${missingNames}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async () => {
+    // Validate form before saving
+    if (!validateForm()) {
+      return false;
+    }
+
     try {
       const success = await saveFormDataFn({
         requerimientoId,
@@ -111,6 +137,7 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
     handleParametroChange,
     handleSave,
     handleGenerateAIEstimation,
-    aiLoading
+    aiLoading,
+    validateForm
   };
 }
