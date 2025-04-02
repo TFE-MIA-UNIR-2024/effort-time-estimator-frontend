@@ -104,6 +104,7 @@ const ProjectList = () => {
               id={project.proyectoid} 
               title={project.nombreproyecto}
               onEdit={() => handleEditProject(project)}
+              onDelete={fetchProjects}
             />
           ))}
         </div>
