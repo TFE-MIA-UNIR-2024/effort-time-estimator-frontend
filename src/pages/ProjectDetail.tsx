@@ -4,9 +4,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MoreVertical } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import NeedsList from "@/components/NeedsList";
+import ProjectEstimationsSheet from "@/components/estimation/ProjectEstimationsSheet";
 
 interface Project {
   proyectoid: number;
@@ -19,6 +20,7 @@ const ProjectDetail = () => {
   const { toast } = useToast();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [estimationsOpen, setEstimationsOpen] = useState(false);
 
   useEffect(() => {
     async function fetchProject() {
@@ -98,7 +100,12 @@ const ProjectDetail = () => {
               </Button>
               <h1 className="text-2xl font-bold">{project?.nombreproyecto}</h1>
             </div>
-            <Button variant="outline">Estimaciones</Button>
+            <Button 
+              variant="outline"
+              onClick={() => setEstimationsOpen(true)}
+            >
+              Estimaciones
+            </Button>
           </div>
         </div>
         
@@ -106,6 +113,14 @@ const ProjectDetail = () => {
           {project && <NeedsList projectId={project.proyectoid} />}
         </div>
       </main>
+
+      {project && (
+        <ProjectEstimationsSheet
+          projectId={project.proyectoid}
+          open={estimationsOpen}
+          onOpenChange={setEstimationsOpen}
+        />
+      )}
     </div>
   );
 };
