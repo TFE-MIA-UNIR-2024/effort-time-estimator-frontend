@@ -29,7 +29,7 @@ const ParameterSelect = ({ id, name, value, options, onChange }: ParameterSelect
         className="block text-sm font-medium flex items-center justify-between"
       >
         {name}
-        <span className="text-destructive text-xs">* Requerido</span>
+        {isInvalid && <span className="text-destructive text-xs">* Requerido</span>}
       </label>
       <Select 
         value={value} 

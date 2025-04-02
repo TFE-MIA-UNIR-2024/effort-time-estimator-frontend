@@ -2,16 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-
-export interface Need {
-  necesidadid: number;
-  nombrenecesidad: string;
-  codigonecesidad: string;
-  fechacreacion: string;
-  cuerpo: string;
-  url?: string;
-  proyectoid: number;
-}
+import { Need } from "./need/types";
 
 export interface Requirement {
   requerimientoid: number;

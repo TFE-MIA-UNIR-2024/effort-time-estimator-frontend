@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/components/ui/use-toast";
 import { useNeedFileHandler } from "./useNeedFileHandler";
 import { useNeedStorage } from "./useNeedStorage";
+import { Need, NeedFormProps } from "./types";
 
 // Form schema definition
 export const needFormSchema = z.object({
@@ -18,28 +19,11 @@ export const needFormSchema = z.object({
 
 export type NeedFormValues = z.infer<typeof needFormSchema>;
 
-export interface Need {
-  necesidadid: number;
-  nombrenecesidad: string;
-  codigonecesidad?: string;
-  cuerpo?: string;
-  url?: string;
-  proyectoid: number;
-  fechacreacion?: string;
-}
-
-interface UseNeedFormProps {
-  projectId: number;
-  need?: Need | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
-
 export function generateCode() {
   return `NEC-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
 }
 
-export const useNeedForm = ({ projectId, need, onSuccess, onCancel }: UseNeedFormProps) => {
+export const useNeedForm = ({ projectId, need, onSuccess, onCancel }: NeedFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const isEditing = !!need;

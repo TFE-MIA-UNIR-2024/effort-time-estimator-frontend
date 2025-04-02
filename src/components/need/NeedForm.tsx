@@ -13,21 +13,7 @@ import {
 import { useNeedForm } from "@/hooks/need/useNeedForm";
 import FileUploadField from "./FileUploadField";
 import FormActions from "./FormActions";
-
-interface NeedFormProps {
-  projectId: number;
-  need?: {
-    necesidadid: number;
-    nombrenecesidad: string;
-    codigonecesidad?: string;
-    cuerpo?: string;
-    url?: string;
-    proyectoid: number;
-    fechacreacion?: string;
-  } | null;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import { NeedFormProps } from "@/hooks/need/types";
 
 const NeedForm = ({ projectId, need, onSuccess, onCancel }: NeedFormProps) => {
   const {
