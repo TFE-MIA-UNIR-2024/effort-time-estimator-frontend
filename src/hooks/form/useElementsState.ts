@@ -50,10 +50,12 @@ export function useElementsState() {
     weights: Record<string, number>,
     elementosFields: { id: number; label: string }[]
   ) => {
+    // Make sure we have an element for each field in elementosFields
     const newElementos = elementosFields.map((field) => {
       const existingElement = currentElementos.find(e => 
         e.elemento_id === field.id || e.tipo_elemento_afectado_id === field.id
       );
+      // Use the value from weights if available, otherwise use 0
       const value = weights[field.label] || 0;
 
       return existingElement 

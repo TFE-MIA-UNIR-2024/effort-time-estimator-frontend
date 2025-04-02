@@ -100,7 +100,8 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
         requerimientoId,
         parametros,
         elementos,
-        dataExists
+        dataExists,
+        elementosFields // Pass elementosFields to the save function
       });
       
       if (success) {

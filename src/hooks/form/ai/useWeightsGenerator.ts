@@ -2,6 +2,9 @@
 import { WeightFormData } from "../types";
 import { getPredictions } from "./predictionService";
 
+// All element IDs that should be included in the response
+const ALL_ELEMENT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+
 // Selected IDs for prediction based on the image example
 const PREDICTION_IDS = [2, 7, 12]; // Triggers/SP, Reportes, QA
 
@@ -11,23 +14,6 @@ export const generateWeights = async (
 ): Promise<WeightFormData> => {
   try {
     const predictionMap = await getPredictions(PREDICTION_IDS);
-    
-    // Create weights object with default values of 0
-    const weights: WeightFormData = {
-      Tablas: 0,
-      "Triggers/SP": 0,
-      "Interfaces c/aplicativos": 0,
-      Formularios: 0,
-      "Subrutinas complejas": 0,
-      "Interfaces con BD": 0,
-      Reportes: 0,
-      Componentes: 0,
-      Javascript: 0,
-      "Componentes Config. y Pruebas": 0,
-      "Despliegue app movil": 0,
-      QA: 0,
-      PF: 0,
-    };
     
     // Map element IDs to their labels
     const idToLabel: Record<number, string> = {
@@ -46,7 +32,18 @@ export const generateWeights = async (
       13: "PF",
     };
     
-    // Update weights with predicted values
+    // Create weights object with default values of 0 for all elements
+    const weights: WeightFormData = {};
+    
+    // Initialize all elements with 0
+    ALL_ELEMENT_IDS.forEach(id => {
+      const label = idToLabel[id];
+      if (label) {
+        weights[label] = 0;
+      }
+    });
+    
+    // Update weights with predicted values where available
     Object.entries(predictionMap).forEach(([id, value]) => {
       const numericId = Number(id);
       const label = idToLabel[numericId];

@@ -10,6 +10,7 @@ interface SaveFormDataParams {
   parametros: Record<number, string>;
   elementos: Element[];
   dataExists: boolean;
+  elementosFields: { id: number; label: string }[]; // Add this parameter
 }
 
 export const useSaveFormData = () => {
@@ -17,7 +18,7 @@ export const useSaveFormData = () => {
   const { toast } = useToast();
   const { getParameterIdByNameAndType } = useFormParameters();
 
-  const handleSave = async ({ requerimientoId, parametros, elementos, dataExists }: SaveFormDataParams) => {
+  const handleSave = async ({ requerimientoId, parametros, elementos, dataExists, elementosFields }: SaveFormDataParams) => {
     setLoading(true);
     try {
       console.log("Saving form data for requerimiento:", requerimientoId);
@@ -61,12 +62,22 @@ export const useSaveFormData = () => {
         });
       }
       
-      // Process each elemento
-      for (const elemento of elementos) {
-        if (elemento.cantidad_estimada <= 0) {
-          console.log(`Skipping elemento ${elemento.elemento_id} with zero or negative quantity`);
-          continue;
-        }
+      // Create a map of elements by ID for easy lookup
+      const elementosMap = new Map<number, Element>();
+      elementos.forEach(elemento => {
+        const id = elemento.tipo_elemento_afectado_id || elemento.elemento_id;
+        elementosMap.set(id, elemento);
+      });
+      
+      // Process each elemento from elementosFields to ensure all are included
+      elementosFields.forEach(field => {
+        const elemento = elementosMap.get(field.id) || {
+          elemento_id: field.id,
+          nombre: field.label,
+          cantidad_estimada: 0,
+          cantidad_real: null,
+          tipo_elemento_afectado_id: field.id
+        };
         
         // Create punto_funcion record for this elemento
         inserts.push({
@@ -74,7 +85,7 @@ export const useSaveFormData = () => {
           tipo_elemento_afectado_id: elemento.tipo_elemento_afectado_id || elemento.elemento_id,
           cantidad_estimada: elemento.cantidad_estimada
         });
-      }
+      });
       
       console.log("Records to insert:", inserts);
       
