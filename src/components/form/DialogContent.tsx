@@ -1,7 +1,9 @@
 
-import { DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles } from "lucide-react";
+import React, { useState } from "react";
+import { DialogTitle, DialogDescription, DialogHeader } from "@/components/ui/dialog";
+import { Button } from "../ui/button";
+import { Loader2, Wand2 } from "lucide-react";
+import { Separator } from "../ui/separator";
 import ParametersSection from "./ParametersSection";
 import ElementsSection from "./ElementsSection";
 import { Element } from "@/hooks/form/types";
@@ -12,14 +14,14 @@ interface DialogContentProps {
   parametros: Record<number, string>;
   elementos: Element[];
   tiposParametros: TipoParametroEstimacion[];
-  elementosFields: { id: number; label: string }[];
-  onParametroChange: (id: number, value: string) => void;
-  onElementChange: (id: number, value: string) => void;
+  elementosFields: Array<{ id: number; label: string }>;
+  onParametroChange: (parametroId: number, value: string) => void;
+  onElementChange: (elementId: number, value: string) => void;
   onClose: () => void;
-  onSave: () => void;
+  onSave: () => Promise<void>;
   dataExists: boolean;
-  handleGenerateAIEstimation?: () => Promise<void>;
-  aiLoading?: boolean;
+  handleGenerateAIEstimation: () => Promise<void>;
+  aiLoading: boolean;
 }
 
 const DialogContentComponent = ({
@@ -34,13 +36,26 @@ const DialogContentComponent = ({
   onSave,
   dataExists,
   handleGenerateAIEstimation,
-  aiLoading = false
+  aiLoading,
 }: DialogContentProps) => {
+  const [showValidation, setShowValidation] = useState(false);
   
+  // Check if all required parameters have values
+  const validateForm = () => {
+    return !tiposParametros.some(tipo => !parametros[tipo.tipo_parametro_estimacionid]);
+  };
+  
+  const handleSave = async () => {
+    setShowValidation(true);
+    if (validateForm()) {
+      await onSave();
+    }
+  };
+
   if (loading) {
     return (
-      <div className="p-6 flex justify-center items-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center p-6">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -48,53 +63,57 @@ const DialogContentComponent = ({
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-xl">
-          {dataExists ? "Editar Formulario" : "Nuevo Formulario"}
-        </DialogTitle>
+        <DialogTitle>Estimación de Requerimiento</DialogTitle>
+        <DialogDescription>
+          Complete los parámetros de la estimación
+        </DialogDescription>
       </DialogHeader>
-
-      <div className="overflow-y-auto max-h-[60vh] pr-2">
-        <ParametersSection
-          parametros={parametros}
-          tiposParametros={tiposParametros}
+      <div className="space-y-6 max-h-[60vh] overflow-y-auto py-4">
+        <ParametersSection 
+          parametros={parametros} 
+          tiposParametros={tiposParametros} 
           onParametroChange={onParametroChange}
+          showValidation={showValidation}
         />
-        
-        <div className="mt-6 flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Elementos</h3>
-          {handleGenerateAIEstimation && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleGenerateAIEstimation}
-              disabled={aiLoading}
-              className="mb-2"
-            >
-              {aiLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Sparkles className="h-4 w-4 mr-2" />
-              )}
-              Estimar esfuerzos con IA
-            </Button>
-          )}
-        </div>
-        
+
+        <Separator className="my-4" />
+
         <ElementsSection
           elementos={elementos}
           elementosFields={elementosFields}
           onElementChange={onElementChange}
         />
-      </div>
 
-      <DialogFooter className="mt-6">
-        <Button variant="outline" onClick={onClose}>
+        <div className="flex justify-center mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGenerateAIEstimation}
+            disabled={aiLoading || !validateForm()}
+            className="w-full"
+          >
+            {aiLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generando estimación...
+              </>
+            ) : (
+              <>
+                <Wand2 className="mr-2 h-4 w-4" />
+                Generar con IA
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+      <div className="flex justify-between mt-4">
+        <Button type="button" variant="outline" onClick={onClose}>
           Cancelar
         </Button>
-        <Button onClick={onSave}>
-          Guardar
+        <Button type="button" onClick={handleSave}>
+          {dataExists ? "Actualizar" : "Guardar"}
         </Button>
-      </DialogFooter>
+      </div>
     </>
   );
 };

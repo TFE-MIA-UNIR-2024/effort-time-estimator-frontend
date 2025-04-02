@@ -14,13 +14,21 @@ interface ParameterSelectProps {
   value: string;
   options: string[];
   onChange: (id: number, value: string) => void;
+  showValidation?: boolean;
 }
 
 // This component renders a select input for a parameter
-const ParameterSelect = ({ id, name, value, options, onChange }: ParameterSelectProps) => {
+const ParameterSelect = ({ 
+  id, 
+  name, 
+  value, 
+  options, 
+  onChange, 
+  showValidation = false 
+}: ParameterSelectProps) => {
   // Ensure options are unique and sorted
   const uniqueOptions = [...new Set(options)].sort();
-  const isInvalid = !value;
+  const isInvalid = !value && showValidation;
   
   return (
     <div className="space-y-2">
