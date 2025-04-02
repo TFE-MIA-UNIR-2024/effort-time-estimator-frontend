@@ -60,7 +60,7 @@ export function useAIEstimationHandler(
       
       toast({
         title: "Error",
-        description: "No se pudo generar la estimación con IA. " + (error?.message || ""),
+        description: "No se pudo generar la estimación con IA. " + (error?.message || "Intentando con predicciones por defecto."),
         variant: "destructive",
       });
     } finally {
