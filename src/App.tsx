@@ -1,13 +1,13 @@
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import ProjectDetail from "./pages/ProjectDetail";
 import NeedDetail from "./pages/NeedDetail";
 import NotFound from "./pages/NotFound";
+import { TooltipProvider as RadixTooltipProvider } from "@radix-ui/react-tooltip";
 
 // Create a QueryClient instance outside of the component
 const queryClient = new QueryClient();
@@ -15,7 +15,7 @@ const queryClient = new QueryClient();
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+      <RadixTooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -27,7 +27,7 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </TooltipProvider>
+      </RadixTooltipProvider>
     </QueryClientProvider>
   );
 };
