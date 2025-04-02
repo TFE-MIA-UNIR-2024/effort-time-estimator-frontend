@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,6 +9,8 @@ import NeedContent from "@/components/need/NeedContent";
 import RequirementsList from "@/components/requirement/RequirementsList";
 import { useNeedDetail } from "@/hooks/useNeedDetail";
 import AIExtractionDialog from "@/components/requirement/AIExtractionDialog";
+import RequirementFormDialog from "@/components/requirement/RequirementFormDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 const NeedDetail = () => {
   const { id } = useParams();
@@ -20,12 +21,12 @@ const NeedDetail = () => {
   const [realQuantityOpen, setRealQuantityOpen] = useState(false);
   const [aiExtractionOpen, setAiExtractionOpen] = useState(false);
   const [selectedRequirementId, setSelectedRequirementId] = useState<number | null>(null);
+  const [requirementFormOpen, setRequirementFormOpen] = useState(false);
+  const [selectedRequirement, setSelectedRequirement] = useState<any>(null);
 
   const handleAddRequirement = () => {
-    toast({
-      title: "Función no implementada",
-      description: "La función para agregar requerimientos está pendiente de implementar",
-    });
+    setSelectedRequirement(null);
+    setRequirementFormOpen(true);
   };
 
   const handleExtractRequirements = () => {
@@ -55,17 +56,35 @@ const NeedDetail = () => {
   };
   
   const handleEditRequirement = (requirementId: number) => {
-    toast({
-      title: "Función no implementada",
-      description: "La función para editar requerimientos está pendiente de implementar",
-    });
+    const requirement = requirements.find(req => req.requerimientoid === requirementId);
+    if (requirement) {
+      setSelectedRequirement(requirement);
+      setRequirementFormOpen(true);
+    }
   };
   
-  const handleDeleteRequirement = (requirementId: number) => {
-    toast({
-      title: "Función no implementada",
-      description: "La función para eliminar requerimientos está pendiente de implementar",
-    });
+  const handleDeleteRequirement = async (requirementId: number) => {
+    try {
+      const { error } = await supabase
+        .from('requerimiento')
+        .delete()
+        .eq('requerimientoid', requirementId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Requerimiento eliminado",
+        description: "El requerimiento ha sido eliminado correctamente",
+      });
+      refetchRequirements();
+    } catch (error) {
+      console.error('Error deleting requirement:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el requerimiento",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -105,6 +124,7 @@ const NeedDetail = () => {
           onGoBack={handleGoBack}
           onAddRequirement={handleAddRequirement}
           onExtractRequirements={showExtractButton ? handleExtractRequirements : undefined}
+          requirementsCount={requirements.length}
         />
         
         {need.cuerpo && (
@@ -134,6 +154,13 @@ const NeedDetail = () => {
           />
         </>
       )}
+
+      <RequirementFormDialog
+        open={requirementFormOpen}
+        onOpenChange={setRequirementFormOpen}
+        onSuccess={refetchRequirements}
+        requirement={selectedRequirement}
+      />
 
       {need && (
         <AIExtractionDialog

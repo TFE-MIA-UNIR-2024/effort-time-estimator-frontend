@@ -2,6 +2,7 @@
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Edit, Trash2, ClipboardList } from "lucide-react";
 
 interface RequirementCardProps {
   requirement: {
@@ -30,8 +31,8 @@ const RequirementCard = ({
         <div>
           <h3 className="text-xl font-semibold">{requirement.nombrerequerimiento}</h3>
           <div className="text-sm text-gray-500">
-            <p>Code: {requirement.codigorequerimiento}</p>
-            <p>Created: {formatDate(requirement.fechacreacion)}</p>
+            <p>Código: {requirement.codigorequerimiento}</p>
+            <p>Creado: {formatDate(requirement.fechacreacion)}</p>
           </div>
         </div>
         <div className="flex space-x-2">
@@ -39,29 +40,36 @@ const RequirementCard = ({
             variant="outline" 
             size="sm"
             onClick={() => onEditForm(requirement.requerimientoid)}
+            title="Editar formulario"
           >
-            Edit Form
+            <ClipboardList className="h-4 w-4 mr-1" />
+            Formulario
           </Button>
           <Button 
             variant="outline" 
             size="sm"
             onClick={() => onAddRealQuantity(requirement.requerimientoid)}
+            title="Añadir cantidad real"
           >
-            Añadir cantidad real
+            Cantidad real
           </Button>
           <Button 
             variant="outline" 
             size="sm"
             onClick={() => onEdit(requirement.requerimientoid)}
+            title="Editar requerimiento"
           >
-            Edit
+            <Edit className="h-4 w-4 mr-1" />
+            Editar
           </Button>
           <Button 
             variant="destructive" 
             size="sm"
             onClick={() => onDelete(requirement.requerimientoid)}
+            title="Eliminar requerimiento"
           >
-            Delete
+            <Trash2 className="h-4 w-4 mr-1" />
+            Eliminar
           </Button>
         </div>
       </div>
