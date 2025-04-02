@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -7,6 +8,7 @@ import { formatDate } from "@/lib/utils";
 import { MoreVertical, FileText, Plus } from "lucide-react";
 import NeedForm from "./need/NeedForm";
 import { useNavigate } from "react-router-dom";
+import { useNeedStorage } from "@/hooks/need/useNeedStorage";
 import { 
   Dialog, 
   DialogContent, 
@@ -37,6 +39,7 @@ const NeedsList = ({ projectId }: { projectId: number }) => {
   const [currentNeed, setCurrentNeed] = useState<Need | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { deleteNeed } = useNeedStorage();
 
   const fetchNeeds = async () => {
     try {
@@ -84,20 +87,15 @@ const NeedsList = ({ projectId }: { projectId: number }) => {
 
   const handleDeleteNeed = async (needId: number) => {
     try {
-      const { error } = await supabase
-        .from('necesidad')
-        .delete()
-        .eq('necesidadid', needId);
+      const success = await deleteNeed(needId);
 
-      if (error) {
-        throw error;
+      if (success) {
+        toast({
+          title: "Eliminado",
+          description: "La necesidad ha sido eliminada correctamente",
+        });
+        fetchNeeds();
       }
-
-      toast({
-        title: "Eliminado",
-        description: "La necesidad ha sido eliminada correctamente",
-      });
-      fetchNeeds();
     } catch (error) {
       console.error('Error deleting need:', error);
       toast({
