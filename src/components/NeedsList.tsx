@@ -2,35 +2,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatDate } from "@/lib/utils";
-import { MoreVertical, FileText, Plus } from "lucide-react";
-import NeedForm from "./need/NeedForm";
-import { useNavigate } from "react-router-dom";
 import { useNeedStorage } from "@/hooks/need/useNeedStorage";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle 
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-interface Need {
-  necesidadid: number;
-  nombrenecesidad: string;
-  codigonecesidad: string;
-  fechacreacion: string;
-  cuerpo: string;
-  url?: string;
-  proyectoid: number;
-}
+import { Need } from "@/hooks/need/types";
+import NeedsListHeader from "./need/NeedsListHeader";
+import NeedsDialog from "./need/NeedsDialog";
+import NeedCard from "./need/NeedCard";
+import NeedsEmptyState from "./need/NeedsEmptyState";
 
 const NeedsList = ({ projectId }: { projectId: number }) => {
   const [needs, setNeeds] = useState<Need[]>([]);
@@ -38,7 +15,6 @@ const NeedsList = ({ projectId }: { projectId: number }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentNeed, setCurrentNeed] = useState<Need | null>(null);
   const { toast } = useToast();
-  const navigate = useNavigate();
   const { deleteNeed } = useNeedStorage();
 
   const fetchNeeds = async () => {
@@ -81,10 +57,6 @@ const NeedsList = ({ projectId }: { projectId: number }) => {
     setDialogOpen(true);
   };
 
-  const handleViewDetails = (need: Need) => {
-    navigate(`/need/${need.necesidadid}`);
-  };
-
   const handleDeleteNeed = async (needId: number) => {
     try {
       const success = await deleteNeed(needId);
@@ -111,105 +83,36 @@ const NeedsList = ({ projectId }: { projectId: number }) => {
     setDialogOpen(true);
   };
 
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setCurrentNeed(null);
+  };
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Necesidades del Cliente</h2>
-        <div className="flex gap-2">
-          <Button onClick={handleAddNeed}>
-            <Plus className="mr-1 h-5 w-5" />
-            Agregar Necesidad
-          </Button>
-        </div>
-      </div>
+      <NeedsListHeader onAddNeed={handleAddNeed} />
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {currentNeed ? "Editar Necesidad" : "Crear Nueva Necesidad"}
-            </DialogTitle>
-          </DialogHeader>
-          <NeedForm 
-            projectId={projectId}
-            need={currentNeed}
-            onSuccess={handleNeedSaved} 
-            onCancel={() => {
-              setDialogOpen(false);
-              setCurrentNeed(null);
-            }} 
-          />
-        </DialogContent>
-      </Dialog>
+      <NeedsDialog 
+        isOpen={dialogOpen}
+        onOpenChange={setDialogOpen}
+        currentNeed={currentNeed}
+        projectId={projectId}
+        onSuccess={handleNeedSaved}
+        onCancel={handleCloseDialog}
+      />
 
-      {loading ? (
-        <div className="py-8 text-center">Cargando necesidades...</div>
-      ) : needs.length > 0 ? (
+      {loading || needs.length === 0 ? (
+        <NeedsEmptyState loading={loading} />
+      ) : (
         <div className="space-y-4">
           {needs.map((need) => (
-            <Card key={need.necesidadid} className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="p-5">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="text-lg font-medium">{need.nombrenecesidad}</h3>
-                    <div className="flex space-x-2">
-                      {need.url && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center"
-                          asChild
-                        >
-                          <a href={need.url} target="_blank" rel="noopener noreferrer">
-                            <FileText className="h-4 w-4 mr-1" />
-                            Ver documento
-                          </a>
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewDetails(need)}
-                      >
-                        Ver Detalles
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-5 w-5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditNeed(need)}>
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-red-600"
-                            onClick={() => handleDeleteNeed(need.necesidadid)}
-                          >
-                            Eliminar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    <p>Código: {need.codigonecesidad || 'N/A'}</p>
-                    <p>Creado: {formatDate(need.fechacreacion) || 'Fecha no disponible'}</p>
-                    {need.cuerpo && (
-                      <div className="mt-3 text-sm line-clamp-2">
-                        {need.cuerpo}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <NeedCard 
+              key={need.necesidadid}
+              need={need}
+              onEdit={handleEditNeed}
+              onDelete={handleDeleteNeed}
+            />
           ))}
-        </div>
-      ) : (
-        <div className="py-8 text-center border rounded-lg bg-gray-50">
-          No hay necesidades registradas para este proyecto
         </div>
       )}
     </div>
