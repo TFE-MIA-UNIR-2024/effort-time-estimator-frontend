@@ -9,17 +9,16 @@ import ProjectDetail from "./pages/ProjectDetail";
 import NeedDetail from "./pages/NeedDetail";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
-import { TooltipProvider as RadixTooltipProvider } from "@radix-ui/react-tooltip";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
-// Create a QueryClient instance inside the component to ensure it's created with React context
 const App = () => {
   // Create a QueryClient instance inside the component
   const queryClient = new QueryClient();
   
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <RadixTooltipProvider>
+    <QueryClientProvider client={queryClient}>
+      <React.StrictMode>
+        <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -32,9 +31,9 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </RadixTooltipProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+        </TooltipProvider>
+      </React.StrictMode>
+    </QueryClientProvider>
   );
 };
 
