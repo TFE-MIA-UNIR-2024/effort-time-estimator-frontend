@@ -35,6 +35,35 @@ export function useElementsState() {
     });
   };
 
+  // Ensure all elements from elementosFields exist in elementos state
+  const ensureAllElementsExist = (elementosFields: { id: number; label: string }[]): Element[] => {
+    let updatedElementos = [...elementos];
+    
+    elementosFields.forEach(field => {
+      const elementExists = updatedElementos.find(elem => 
+        elem.elemento_id === field.id || elem.tipo_elemento_afectado_id === field.id
+      );
+      
+      if (!elementExists) {
+        // Add missing element with zero quantity
+        updatedElementos.push({
+          elemento_id: field.id,
+          nombre: field.label,
+          cantidad_estimada: 0,
+          cantidad_real: null,
+          tipo_elemento_afectado_id: field.id
+        });
+      }
+    });
+    
+    // Update state if new elements were added
+    if (updatedElementos.length !== elementos.length) {
+      setElementos(updatedElementos);
+    }
+    
+    return updatedElementos;
+  };
+
   const updateElementosWithNames = (elementos: Element[], elementosFields: { id: number; label: string }[]) => {
     return elementos.map(elem => {
       const elementField = elementosFields.find(field => field.id === elem.elemento_id || field.id === elem.tipo_elemento_afectado_id);
@@ -75,6 +104,7 @@ export function useElementsState() {
     setElementos,
     handleElementChange,
     updateElementosWithNames,
-    updateElementosWithAIValues
+    updateElementosWithAIValues,
+    ensureAllElementsExist
   };
 }

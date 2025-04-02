@@ -48,7 +48,7 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
     useFetchFormData(requerimientoId, isOpen);
   
   const { parametros, handleParametroChange, setParametros } = useParametersState();
-  const { elementos, handleElementChange, setElementos } = useElementsState();
+  const { elementos, handleElementChange, setElementos, ensureAllElementsExist } = useElementsState();
   const { aiLoading, handleGenerateAIEstimation: generateAIEstimation } = 
     useAIEstimationHandler(elementos, setElementos, elementosFields, requirement);
 
@@ -66,8 +66,11 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
       if (fetchedElementos.length > 0) {
         setElementos(fetchedElementos);
       }
+      
+      // Ensure all elements defined in elementosFields exist in the state
+      ensureAllElementsExist(elementosFields);
     }
-  }, [loading, fetchedParametros, fetchedElementos, tiposParametros, setParametros, setElementos]);
+  }, [loading, fetchedParametros, fetchedElementos, tiposParametros, setParametros, setElementos, ensureAllElementsExist]);
 
   // Validate that all required parameters have values
   const validateForm = () => {
@@ -96,10 +99,13 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
     }
 
     try {
+      // Ensure all elements from elementosFields exist in elementos state before saving
+      const completeElementos = ensureAllElementsExist(elementosFields);
+      
       const success = await saveFormDataFn({
         requerimientoId,
         parametros,
-        elementos,
+        elementos: completeElementos,
         dataExists
       });
       
