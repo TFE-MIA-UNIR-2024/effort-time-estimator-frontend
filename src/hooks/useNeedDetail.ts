@@ -14,11 +14,14 @@ export const useNeedDetail = (needId: string | undefined) => {
       try {
         setLoading(true);
         
+        // Convert string needId to number for database query
+        const needIdNumber = parseInt(needId);
+        
         // Fetch need details
         const { data: needData, error: needError } = await supabase
           .from('necesidad')
           .select('*')
-          .eq('necesidadid', needId)
+          .eq('necesidadid', needIdNumber)
           .maybeSingle();
         
         if (needError) throw needError;
@@ -28,7 +31,7 @@ export const useNeedDetail = (needId: string | undefined) => {
         const { data: requirementsData, error: reqError } = await supabase
           .from('requerimiento')
           .select('*')
-          .eq('necesidadid', needId);
+          .eq('necesidadid', needIdNumber);
         
         if (reqError) throw reqError;
         
@@ -73,11 +76,14 @@ export const useNeedDetail = (needId: string | undefined) => {
     try {
       setLoading(true);
       
+      // Convert string needId to number for database query
+      const needIdNumber = parseInt(needId);
+      
       // Fetch requirements for the need
       const { data: requirementsData, error: reqError } = await supabase
         .from('requerimiento')
         .select('*')
-        .eq('necesidadid', needId);
+        .eq('necesidadid', needIdNumber);
       
       if (reqError) throw reqError;
       
