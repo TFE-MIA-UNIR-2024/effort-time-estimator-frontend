@@ -26,12 +26,16 @@ export function useAIEstimationHandler(
 
     setAILoading(true);
     try {
+      console.log("Generating AI estimation for requirement:", requirement.nombrerequerimiento);
+      
       const weights = await generateWeights(
         requirement.nombrerequerimiento,
         requirement.cuerpo || ""
       );
 
-      // Update elementos based on weights
+      console.log("AI generated weights:", weights);
+
+      // Ensure all element fields from 1 to 13 are included in the new elementos
       const newElementos = elementosFields.map((field) => {
         const existingElement = elementos.find(e => 
           e.elemento_id === field.id || e.tipo_elemento_afectado_id === field.id
@@ -49,6 +53,9 @@ export function useAIEstimationHandler(
             };
       });
 
+      console.log("New elementos after AI generation:", newElementos);
+      console.log("Total AI-generated elementos:", newElementos.length);
+      
       setElementos(newElementos);
       
       toast({

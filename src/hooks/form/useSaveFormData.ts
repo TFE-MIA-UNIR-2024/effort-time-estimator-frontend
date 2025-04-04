@@ -66,30 +66,34 @@ export const useSaveFormData = () => {
         });
       }
       
+      // Get a set of all IDs from 1 to 13 to ensure complete coverage
+      const allElementIds = new Set(Array.from({length: 13}, (_, i) => i + 1));
+      
       // Process each elemento from elementos array
       elementos.forEach(elemento => {
-        if (elemento.cantidad_estimada !== undefined && elemento.cantidad_estimada !== null) {
+        const elementoId = elemento.tipo_elemento_afectado_id || elemento.elemento_id;
+        
+        if (elementoId && elemento.cantidad_estimada !== undefined && elemento.cantidad_estimada !== null) {
           // Create punto_funcion record for this elemento
           inserts.push({
             requerimientoid: requerimientoId,
-            tipo_elemento_afectado_id: elemento.tipo_elemento_afectado_id || elemento.elemento_id,
+            tipo_elemento_afectado_id: elementoId,
             cantidad_estimada: elemento.cantidad_estimada,
             cantidad_real: elemento.cantidad_real
           });
+          
+          // Remove this ID from the set of IDs to fill
+          allElementIds.delete(elementoId);
         }
       });
       
-      // Fill in missing elementos from elementosFields to ensure all are included
-      const existingElementIds = new Set(elementos.map(el => el.tipo_elemento_afectado_id || el.elemento_id));
-      
-      elementosFields.forEach(field => {
-        if (!existingElementIds.has(field.id)) {
-          inserts.push({
-            requerimientoid: requerimientoId,
-            tipo_elemento_afectado_id: field.id,
-            cantidad_estimada: 0
-          });
-        }
+      // Fill in any missing elementos from elementosFields to ensure all IDs 1-13 are included
+      allElementIds.forEach(elementId => {
+        inserts.push({
+          requerimientoid: requerimientoId,
+          tipo_elemento_afectado_id: elementId,
+          cantidad_estimada: 0  // Default value for missing elements
+        });
       });
       
       console.log(`Inserting ${inserts.length} records for requirement ID ${requerimientoId}`);

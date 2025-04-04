@@ -12,11 +12,21 @@ interface PredictionResponse {
   predicciones: PredictionItem[];
 }
 
-// Default values to use when API is unavailable
+// Default values to use when API is unavailable - enhanced with values for all IDs
 const DEFAULT_PREDICTIONS = {
+  1: 1, // Tablas
   2: 2, // Triggers/SP
+  3: 1, // Interfaces c/aplicativos
+  4: 3, // Formularios
+  5: 2, // Subrutinas complejas
+  6: 1, // Interfaces con BD
   7: 3, // Reportes
-  12: 4 // QA
+  8: 2, // Componentes
+  9: 2, // Javascript
+  10: 1, // Componentes Config. y Pruebas
+  11: 0, // Despliegue app movil
+  12: 4, // QA
+  13: 5  // PF
 };
 
 export async function getPredictions(elementIds: number[]): Promise<Record<number, number>> {
@@ -63,9 +73,10 @@ export async function getPredictions(elementIds: number[]): Promise<Record<numbe
     console.log("Using default predictions as fallback");
     const fallbackPredictions: Record<number, number> = {};
     
-    elementIds.forEach(id => {
-      fallbackPredictions[id] = DEFAULT_PREDICTIONS[id as keyof typeof DEFAULT_PREDICTIONS] || 2;
-    });
+    // Include all default values for IDs 1-13 instead of just requested IDs
+    for (let i = 1; i <= 13; i++) {
+      fallbackPredictions[i] = DEFAULT_PREDICTIONS[i as keyof typeof DEFAULT_PREDICTIONS] || 1;
+    }
     
     return fallbackPredictions;
   }

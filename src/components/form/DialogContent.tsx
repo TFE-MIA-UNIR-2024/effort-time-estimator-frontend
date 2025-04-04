@@ -52,6 +52,12 @@ const DialogContentComponent = ({
     }
   };
 
+  const handleGenerateAI = async () => {
+    console.log("Generating AI estimation with elementos:", elementos);
+    console.log("Element fields:", elementosFields);
+    await handleGenerateAIEstimation();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-6">
@@ -88,7 +94,7 @@ const DialogContentComponent = ({
           <Button
             type="button"
             variant="outline"
-            onClick={handleGenerateAIEstimation}
+            onClick={handleGenerateAI}
             disabled={aiLoading || !validateForm()}
             className="w-full"
           >
