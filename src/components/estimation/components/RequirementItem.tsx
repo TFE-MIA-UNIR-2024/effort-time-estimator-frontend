@@ -23,6 +23,9 @@ interface RequirementItemProps {
 }
 
 const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: RequirementItemProps) => {
+  // Calculate effort per function point for this requirement
+  const effortPerFP = requirement.pf > 0 ? (requirement.esfuerzoEstimado / requirement.pf) : 0;
+
   return (
     <div className="border-t pt-2 mt-2">
       <div 
@@ -35,7 +38,14 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-end">
             <p className="text-sm">PF: {formatNumber(requirement.pf)}</p>
-            <p className="text-sm font-medium">Esfuerzo: {formatNumber(requirement.esfuerzoEstimado)} hrs</p>
+            <div className="flex items-center">
+              <p className="text-sm font-medium">Esfuerzo: {formatNumber(requirement.esfuerzoEstimado)} hrs</p>
+              {requirement.pf > 0 && (
+                <p className="text-xs text-muted-foreground ml-1">
+                  ({formatNumber(effortPerFP)} hrs/PF)
+                </p>
+              )}
+            </div>
           </div>
           {expanded ? 
             <ChevronUp className="h-4 w-4" /> : 

@@ -49,6 +49,9 @@ const NeedEstimationItem = ({ need, expanded, onToggle, formatNumber }: NeedEsti
 
   // Check if this need has any requirements with function points
   const hasAnyFunctionPoints = need.totalPF > 0;
+  
+  // Calculate effort per function point ratio
+  const effortPerFP = hasAnyFunctionPoints ? (need.totalEsfuerzo / need.totalPF) : 0;
 
   return (
     <div className="border rounded-lg overflow-hidden shadow-sm">
@@ -64,7 +67,10 @@ const NeedEstimationItem = ({ need, expanded, onToggle, formatNumber }: NeedEsti
             ({need.requirements.length} requerimientos)
           </span>
           {need.totalEsfuerzo === 0 && (
-            <AlertCircle className="h-4 w-4 text-amber-500" title="Sin esfuerzo estimado" />
+            <AlertCircle 
+              className="h-4 w-4 text-amber-500" 
+              aria-label="Sin esfuerzo estimado" 
+            />
           )}
         </div>
         <div className="flex flex-col items-end">
@@ -73,6 +79,11 @@ const NeedEstimationItem = ({ need, expanded, onToggle, formatNumber }: NeedEsti
           </div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium">Esfuerzo: {formatNumber(need.totalEsfuerzo)} hrs</p>
+            {hasAnyFunctionPoints && (
+              <p className="text-xs text-muted-foreground">
+                ({formatNumber(effortPerFP)} hrs/PF)
+              </p>
+            )}
             {expanded ? 
               <ChevronUp className="h-4 w-4" /> : 
               <ChevronDown className="h-4 w-4" />
