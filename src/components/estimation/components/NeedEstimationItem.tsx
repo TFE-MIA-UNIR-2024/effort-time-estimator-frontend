@@ -47,6 +47,9 @@ const NeedEstimationItem = ({ need, expanded, onToggle, formatNumber }: NeedEsti
     });
   };
 
+  // Check if this need has any requirements with function points
+  const hasAnyFunctionPoints = need.totalPF > 0;
+
   return (
     <div className="border rounded-lg overflow-hidden shadow-sm">
       <div 
@@ -61,7 +64,7 @@ const NeedEstimationItem = ({ need, expanded, onToggle, formatNumber }: NeedEsti
             ({need.requirements.length} requerimientos)
           </span>
           {need.totalEsfuerzo === 0 && (
-            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <AlertCircle className="h-4 w-4 text-amber-500" title="Sin esfuerzo estimado" />
           )}
         </div>
         <div className="flex flex-col items-end">
@@ -80,15 +83,21 @@ const NeedEstimationItem = ({ need, expanded, onToggle, formatNumber }: NeedEsti
 
       {expanded && (
         <div className="px-4 pb-2">
-          {need.requirements.map((req) => (
-            <RequirementItem
-              key={req.requerimientoid}
-              requirement={req}
-              expanded={expandedRequirements.has(req.requerimientoid)}
-              onToggle={() => toggleRequirement(req.requerimientoid)}
-              formatNumber={formatNumber}
-            />
-          ))}
+          {need.requirements.length > 0 ? (
+            need.requirements.map((req) => (
+              <RequirementItem
+                key={req.requerimientoid}
+                requirement={req}
+                expanded={expandedRequirements.has(req.requerimientoid)}
+                onToggle={() => toggleRequirement(req.requerimientoid)}
+                formatNumber={formatNumber}
+              />
+            ))
+          ) : (
+            <div className="py-3 text-center text-sm text-muted-foreground">
+              No hay requerimientos con estimaciones.
+            </div>
+          )}
         </div>
       )}
     </div>

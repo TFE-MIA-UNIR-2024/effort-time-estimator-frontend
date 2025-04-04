@@ -154,10 +154,23 @@ export const processRequirements = async (
   return Promise.all(
     requirements.map(async (req) => {
       const puntosFuncion = req.punto_funcion || [];
+      
+      // Calculate total function points
       const pf = puntosFuncion.reduce(
         (sum, pf) => sum + (pf.cantidad_estimada || 0),
         0
       );
+      
+      // If no function points, set effort to zero
+      if (pf === 0 || puntosFuncion.length === 0) {
+        return {
+          requerimientoid: req.requerimientoid,
+          nombrerequerimiento: req.nombrerequerimiento,
+          pf: 0,
+          esfuerzoEstimado: 0,
+          puntosFuncion: [],
+        };
+      }
 
       const esfuerzoMultiplicativo = await Promise.all(
         puntosFuncion.map(async (pf) => 

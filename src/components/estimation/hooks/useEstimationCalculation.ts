@@ -1,91 +1,76 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useState, useEffect } from "react";
 import { 
   fetchParameters, 
   fetchNeedsForProject, 
   fetchRequirementsWithEstimations 
 } from "./estimationService";
-import { 
-  Requirement, 
-  NeedEstimation, 
-  ParametroEstimacion 
-} from "./types";
 
-export const useEstimationCalculation = (projectId: number, open: boolean) => {
-  const [needsEstimations, setNeedsEstimations] = useState<NeedEstimation[]>([]);
-  const [parametros, setParametros] = useState<ParametroEstimacion[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [totalProjectHours, setTotalProjectHours] = useState(0);
+export const useEstimationCalculation = (projectId: number, isOpen: boolean) => {
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { toast } = useToast();
+  const [needsEstimations, setNeedsEstimations] = useState<any[]>([]);
+  const [totalProjectHours, setTotalProjectHours] = useState(0);
 
-  const calculateTotalProjectHours = (needsWithEstimations: NeedEstimation[]) => {
-    const projectTotal = needsWithEstimations.reduce(
-      (sum, need) => sum + need.totalEsfuerzo, 
-      0
-    );
-    setTotalProjectHours(projectTotal);
-  };
+  useEffect(() => {
+    if (isOpen && projectId) {
+      fetchData();
+    }
+  }, [isOpen, projectId]);
 
-  const fetchEstimations = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      // Step 1: Fetch parameters
-      const parametrosData = await fetchParameters();
-      if (!parametrosData) throw new Error("Failed to fetch parameters");
-      setParametros(parametrosData);
-
-      // Step 2: Fetch needs for the project
-      const needs = await fetchNeedsForProject(projectId);
-      if (!needs) {
-        console.log("No needs found for project");
-        setNeedsEstimations([]);
+      console.log(`Fetching estimation data for project ${projectId}`);
+      
+      // Fetch parameters
+      const parameters = await fetchParameters();
+      if (!parameters) {
+        console.error("Failed to fetch parameters");
         setLoading(false);
         return;
       }
-
-      // Step 3: Calculate estimations for each need
-      const needsWithEstimations = await fetchRequirementsWithEstimations(needs, parametrosData);
-      setNeedsEstimations(needsWithEstimations);
       
-      // Step 4: Calculate project total hours
-      calculateTotalProjectHours(needsWithEstimations);
+      // Fetch needs for this project
+      const needs = await fetchNeedsForProject(projectId);
+      if (!needs) {
+        console.error("Failed to fetch needs");
+        setLoading(false);
+        return;
+      }
       
+      // Get requirements with estimations for each need
+      const estimationsData = await fetchRequirementsWithEstimations(needs, parameters);
+      
+      // Calculate total project hours
+      const totalHours = estimationsData.reduce((sum, need) => sum + need.totalEsfuerzo, 0);
+      
+      setNeedsEstimations(estimationsData);
+      setTotalProjectHours(totalHours);
     } catch (error) {
-      console.error("Error fetching data:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las estimaciones",
-        variant: "destructive",
-      });
+      console.error("Error fetching estimation data:", error);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
-  }, [projectId, toast]);
-
-  useEffect(() => {
-    if (open) {
-      fetchEstimations();
-    }
-  }, [open, fetchEstimations]);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchEstimations();
   };
 
-  // Format number to always show with 2 decimal places
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+
   const formatNumber = (num: number) => {
-    return num.toFixed(2);
+    return num.toLocaleString('es-ES', { 
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    });
   };
 
   return {
-    needsEstimations,
     loading,
     refreshing,
+    needsEstimations,
     totalProjectHours,
     handleRefresh,
     formatNumber
