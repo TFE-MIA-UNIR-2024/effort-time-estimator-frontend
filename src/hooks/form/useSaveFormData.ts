@@ -25,6 +25,10 @@ export const useSaveFormData = () => {
       console.log("Parameters to save:", parametros);
       console.log("Elements to save:", elementos);
       
+      if (!requerimientoId || isNaN(requerimientoId)) {
+        throw new Error(`Invalid requerimiento ID: ${requerimientoId}`);
+      }
+      
       // First, delete existing data for this requerimiento
       const { error: deleteError } = await supabase
         .from('punto_funcion')

@@ -58,14 +58,17 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
   const { aiLoading, handleGenerateAIEstimation: generateAIEstimation } = 
     useAIEstimationHandler(elementos, setElementos, elementosFields, requirement);
 
-  // Reset and re-fetch data when requirement ID changes or form opens
+  // Reset and re-fetch data when requirement ID changes or form opens/closes
   useEffect(() => {
-    if (isOpen) {
-      // Reset states when opening for a different requirement
+    // Clear states when the dialog closes
+    if (!isOpen) {
       setParametros({});
       setElementos([]);
+      return;
     }
-  }, [requerimientoId, isOpen, setParametros, setElementos]);
+    
+    // The rest is handled in useFetchFormData and will trigger when isOpen changes
+  }, [isOpen, setParametros, setElementos]);
 
   // Sync state from fetched data using useEffect
   useEffect(() => {
@@ -79,13 +82,8 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
       setParametros(fetchedParametros);
       
       // Update elements state with fetched data
-      if (fetchedElementos.length > 0) {
-        console.log("Setting elementos:", fetchedElementos);
-        setElementos(fetchedElementos);
-      } else {
-        // Reset elementos if none were fetched
-        setElementos([]);
-      }
+      console.log("Setting elementos:", fetchedElementos);
+      setElementos(fetchedElementos);
     }
   }, [loading, fetchedParametros, fetchedElementos, tiposParametros, setParametros, setElementos, requerimientoId]);
 

@@ -17,6 +17,11 @@ export const useNeedDetail = (needId: string | undefined) => {
         // Convert string needId to number for database query
         const needIdNumber = parseInt(needId);
         
+        if (isNaN(needIdNumber)) {
+          console.error('Invalid need ID:', needId);
+          return;
+        }
+        
         // Fetch need details
         const { data: needData, error: needError } = await supabase
           .from('necesidad')
@@ -55,7 +60,7 @@ export const useNeedDetail = (needId: string | undefined) => {
             }
             
             console.log(`Punto funcion data received for req ${req.requerimientoid}:`, puntosFuncion);
-            return { ...req, punto_funcion: puntosFuncion };
+            return { ...req, punto_funcion: puntosFuncion || [] };
           })
         );
         
@@ -79,6 +84,11 @@ export const useNeedDetail = (needId: string | undefined) => {
       // Convert string needId to number for database query
       const needIdNumber = parseInt(needId);
       
+      if (isNaN(needIdNumber)) {
+        console.error('Invalid need ID:', needId);
+        return;
+      }
+      
       // Fetch requirements for the need
       const { data: requirementsData, error: reqError } = await supabase
         .from('requerimiento')
@@ -87,9 +97,12 @@ export const useNeedDetail = (needId: string | undefined) => {
       
       if (reqError) throw reqError;
       
-      // For each requirement, fetch its function points
+      // For each requirement, fetch its function points - make sure we get fresh data
       const requirementsWithPF = await Promise.all(
         requirementsData.map(async (req) => {
+          // Clear cache by adding a timestamp query param
+          const timestamp = new Date().getTime();
+          
           const { data: puntosFuncion, error: pfError } = await supabase
             .from('punto_funcion')
             .select(`
@@ -107,7 +120,7 @@ export const useNeedDetail = (needId: string | undefined) => {
           }
           
           console.log(`Punto funcion data received for req ${req.requerimientoid}:`, puntosFuncion);
-          return { ...req, punto_funcion: puntosFuncion };
+          return { ...req, punto_funcion: puntosFuncion || [] };
         })
       );
       

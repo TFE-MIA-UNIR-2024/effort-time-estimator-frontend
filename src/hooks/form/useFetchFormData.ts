@@ -24,6 +24,12 @@ export function useFetchFormData(requerimientoId: number, isOpen: boolean): Fetc
 
   useEffect(() => {
     if (isOpen && requerimientoId) {
+      // Reset all state variables when opening for a new requirement ID
+      setParametros({});
+      setElementos([]);
+      setDataExists(false);
+      setRequirement(null);
+      
       fetchData();
     }
   }, [isOpen, requerimientoId]);
@@ -138,7 +144,15 @@ export function useFetchFormData(requerimientoId: number, isOpen: boolean): Fetc
           
           console.log(`Created ${initialElementos.length} elementos for requirement ID ${requerimientoId}`);
           setElementos(initialElementos);
+        } else {
+          // Clear elementos if there are no element records
+          setElementos([]);
         }
+      } else {
+        // No existing data found, reset state
+        setDataExists(false);
+        setParametros({});
+        setElementos([]);
       }
       
       setParametros(initialParametros);
