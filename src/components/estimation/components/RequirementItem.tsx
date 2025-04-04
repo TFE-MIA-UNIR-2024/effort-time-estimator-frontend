@@ -58,13 +58,13 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
         <div className="pl-4 py-2 space-y-1 bg-gray-50 rounded-md mb-2">
           <p className="text-sm font-medium mb-2">Elementos afectados:</p>
           {requirement.puntosFuncion.filter(pf => pf.cantidad_estimada && pf.cantidad_estimada > 0).length > 0 ? (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-1 px-2">
               {requirement.puntosFuncion
                 .filter(pf => pf.cantidad_estimada && pf.cantidad_estimada > 0)
                 .map((pf, idx) => (
                   <div key={idx} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{pf.tipo_elemento_afectado?.nombre}:</span>
-                    <span className="font-medium">{pf.cantidad_estimada}</span>
+                    <span>{pf.tipo_elemento_afectado?.nombre}:</span>
+                    <span className="font-medium ml-2">{pf.cantidad_estimada}</span>
                   </div>
                 ))}
             </div>
