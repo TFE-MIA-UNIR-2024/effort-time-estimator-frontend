@@ -20,7 +20,7 @@ export const useRequirementsExtraction = () => {
       onProgress(0);
       
       // Check if API key is defined
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      const apiKey = "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";
       if (!apiKey) {
         throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
       }
