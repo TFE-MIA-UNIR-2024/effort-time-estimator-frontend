@@ -1,95 +1,117 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { Need } from "./need/types";
 
-export interface Requirement {
-  requerimientoid: number;
-  nombrerequerimiento: string;
-  codigorequerimiento: string;
-  fechacreacion: string;
-  cuerpo?: string;
-  necesidadid: number;
-}
-
-interface UseNeedDetailReturn {
-  need: Need | null;
-  requirements: Requirement[];
-  loading: boolean;
-  refetchRequirements: () => Promise<void>;
-}
-
-export const useNeedDetail = (needId: string | undefined): UseNeedDetailReturn => {
-  const { toast } = useToast();
-  const [need, setNeed] = useState<Need | null>(null);
-  const [requirements, setRequirements] = useState<Requirement[]>([]);
+export const useNeedDetail = (needId: string | undefined) => {
+  const [need, setNeed] = useState<any>(null);
+  const [requirements, setRequirements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchRequirements = useCallback(async (numericNeedId: number) => {
-    try {
-      const { data: reqData, error: reqError } = await supabase
-        .from('requerimiento')
-        .select('*')
-        .eq('necesidadid', numericNeedId);
-
-      if (reqError) {
-        throw reqError;
-      }
-
-      setRequirements(reqData || []);
-    } catch (error) {
-      console.error('Error fetching requirements:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los requerimientos",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
-
-  const refetchRequirements = useCallback(async () => {
-    if (!need) return;
-    await fetchRequirements(need.necesidadid);
-  }, [need, fetchRequirements]);
-
   useEffect(() => {
-    async function fetchNeedAndRequirements() {
+    const fetchNeedDetail = async () => {
+      if (!needId) return;
+      
       try {
-        if (!needId) return;
+        setLoading(true);
         
-        const numericId = parseInt(needId, 10);
-        if (isNaN(numericId)) {
-          throw new Error("Invalid need ID");
-        }
-        
+        // Fetch need details
         const { data: needData, error: needError } = await supabase
           .from('necesidad')
           .select('*')
-          .eq('necesidadid', numericId)
-          .single();
-
-        if (needError) {
-          throw needError;
-        }
-
+          .eq('necesidadid', needId)
+          .maybeSingle();
+        
+        if (needError) throw needError;
         setNeed(needData);
         
-        await fetchRequirements(numericId);
+        // Fetch requirements for the need
+        const { data: requirementsData, error: reqError } = await supabase
+          .from('requerimiento')
+          .select('*')
+          .eq('necesidadid', needId);
+        
+        if (reqError) throw reqError;
+        
+        // For each requirement, fetch its function points
+        const requirementsWithPF = await Promise.all(
+          requirementsData.map(async (req) => {
+            const { data: puntosFuncion, error: pfError } = await supabase
+              .from('punto_funcion')
+              .select(`
+                cantidad_estimada,
+                tipo_elemento_afectado_id,
+                tipo_elemento_afectado (
+                  nombre
+                )
+              `)
+              .eq('requerimientoid', req.requerimientoid);
+            
+            if (pfError) {
+              console.error(`Error fetching function points for requirement ${req.requerimientoid}:`, pfError);
+              return { ...req, punto_funcion: [] };
+            }
+            
+            console.log(`Punto funcion data received for req ${req.requerimientoid}:`, puntosFuncion);
+            return { ...req, punto_funcion: puntosFuncion };
+          })
+        );
+        
+        setRequirements(requirementsWithPF);
       } catch (error) {
         console.error('Error fetching need details:', error);
-        toast({
-          title: "Error",
-          description: "No se pudo cargar la información de la necesidad",
-          variant: "destructive",
-        });
       } finally {
         setLoading(false);
       }
+    };
+    
+    fetchNeedDetail();
+  }, [needId]);
+  
+  const refetchRequirements = async () => {
+    if (!needId) return;
+    
+    try {
+      setLoading(true);
+      
+      // Fetch requirements for the need
+      const { data: requirementsData, error: reqError } = await supabase
+        .from('requerimiento')
+        .select('*')
+        .eq('necesidadid', needId);
+      
+      if (reqError) throw reqError;
+      
+      // For each requirement, fetch its function points
+      const requirementsWithPF = await Promise.all(
+        requirementsData.map(async (req) => {
+          const { data: puntosFuncion, error: pfError } = await supabase
+            .from('punto_funcion')
+            .select(`
+              cantidad_estimada,
+              tipo_elemento_afectado_id,
+              tipo_elemento_afectado (
+                nombre
+              )
+            `)
+            .eq('requerimientoid', req.requerimientoid);
+          
+          if (pfError) {
+            console.error(`Error fetching function points for requirement ${req.requerimientoid}:`, pfError);
+            return { ...req, punto_funcion: [] };
+          }
+          
+          console.log(`Punto funcion data received for req ${req.requerimientoid}:`, puntosFuncion);
+          return { ...req, punto_funcion: puntosFuncion };
+        })
+      );
+      
+      setRequirements(requirementsWithPF);
+    } catch (error) {
+      console.error('Error refetching requirements:', error);
+    } finally {
+      setLoading(false);
     }
-
-    fetchNeedAndRequirements();
-  }, [needId, toast, fetchRequirements]);
-
+  };
+  
   return { need, requirements, loading, refetchRequirements };
 };

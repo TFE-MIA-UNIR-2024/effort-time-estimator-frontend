@@ -2,7 +2,7 @@
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Edit, Trash2, ClipboardList } from "lucide-react";
+import { Edit, Trash2, ClipboardList, Calculator } from "lucide-react";
 
 interface RequirementCardProps {
   requirement: {
@@ -51,6 +51,7 @@ const RequirementCard = ({
             onClick={() => onAddRealQuantity(requirement.requerimientoid)}
             title="Añadir cantidad real"
           >
+            <Calculator className="h-4 w-4 mr-1" />
             Cantidad real
           </Button>
           <Button 

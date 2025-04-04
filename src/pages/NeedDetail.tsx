@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -46,6 +47,7 @@ const NeedDetail = () => {
   };
 
   const handleEditForm = (requirementId: number) => {
+    console.log("Fetching data for requerimiento:", requirementId);
     setSelectedRequirementId(requirementId);
     setEditFormOpen(true);
   };
