@@ -6,30 +6,44 @@ import {
   SheetHeader, 
   SheetTitle, 
 } from "@/components/ui/sheet";
-import { ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, AlertCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 
-interface Need {
-  necesidadid: number;
-  nombrenecesidad: string;
-  requirements: Requirement[];
-  totalElements: number;
-  totalEffort: number;
+interface ParametroEstimacion {
+  parametro_estimacionid: number;
+  nombre: string;
+  factor: number | null;
+  factor_ia: number | null;
+  tipo_parametro_estimacion: {
+    nombre: string;
+    haselementosafectados: boolean;
+  } | null;
+}
+
+interface PuntoFuncion {
+  cantidad_estimada: number | null;
+  tipo_elemento_afectado_id: number | null;
+  tipo_elemento_afectado: {
+    nombre: string;
+  } | null;
 }
 
 interface Requirement {
   requerimientoid: number;
   nombrerequerimiento: string;
-  elements: AffectedElement[];
-  totalElements: number;
-  totalEffort: number;
+  pf: number;
+  esfuerzoEstimado: number;
+  puntosFuncion: PuntoFuncion[];
 }
 
-interface AffectedElement {
-  elemento_afectadoid: number;
-  nombre: string;
-  cantidad_estimada: number;
+interface NeedEstimation {
+  necesidadid: number;
+  nombrenecesidad: string;
+  totalPF: number;
+  totalEsfuerzo: number;
+  requirements: Requirement[];
 }
 
 interface ProjectEstimationsSheetProps {
@@ -39,112 +53,223 @@ interface ProjectEstimationsSheetProps {
 }
 
 const ProjectEstimationsSheet = ({ projectId, open, onOpenChange }: ProjectEstimationsSheetProps) => {
-  const [needs, setNeeds] = useState<Need[]>([]);
+  const [needsEstimations, setNeedsEstimations] = useState<NeedEstimation[]>([]);
+  const [parametros, setParametros] = useState<ParametroEstimacion[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedNeeds, setExpandedNeeds] = useState<Set<number>>(new Set());
   const [expandedRequirements, setExpandedRequirements] = useState<Set<number>>(new Set());
-  const [totalProjectEffort, setTotalProjectEffort] = useState(0);
   const [totalProjectHours, setTotalProjectHours] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
-      fetchEstimationData();
+      fetchEstimations();
     }
   }, [open, projectId]);
 
-  const fetchEstimationData = async () => {
+  const fetchEstimations = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      
-      // 1. Fetch all needs for this project
-      const { data: needsData, error: needsError } = await supabase
-        .from('necesidad')
-        .select('necesidadid, nombrenecesidad')
-        .eq('proyectoid', projectId);
-      
-      if (needsError) throw needsError;
+      // Obtener parámetros primero
+      const { data: parametrosData, error: paramError } = await supabase
+        .from("parametro_estimacion")
+        .select(
+          `
+          parametro_estimacionid,
+          nombre,
+          factor,
+          factor_ia,
+          tipo_parametro_estimacion (
+            nombre,
+            haselementosafectados
+          )
+        `
+        )
+        .limit(100);
 
-      const needsWithRequirements: Need[] = [];
-      let projectTotalEffort = 0;
-      
-      // 2. For each need, fetch its requirements
-      for (const need of needsData || []) {
-        const { data: requirementsData, error: requirementsError } = await supabase
-          .from('requerimiento')
-          .select('requerimientoid, nombrerequerimiento')
-          .eq('necesidadid', need.necesidadid);
-        
-        if (requirementsError) throw requirementsError;
-        
-        const requirementsWithElements: Requirement[] = [];
-        let needTotalEffort = 0;
-        let needTotalElements = 0;
-        
-        // 3. For each requirement, fetch its affected elements
-        for (const req of requirementsData || []) {
-          const { data: elementsData, error: elementsError } = await supabase
-            .from('punto_funcion')
-            .select(`
-              punto_funcionid,
-              cantidad_estimada,
-              tipo_elemento_afectado:tipo_elemento_afectado_id(
-                tipo_elemento_afectadoid,
-                nombre
-              )
-            `)
-            .eq('requerimientoid', req.requerimientoid)
-            .not('tipo_elemento_afectado_id', 'is', null);
-          
-          if (elementsError) throw elementsError;
-          
-          const formattedElements: AffectedElement[] = elementsData
-            ?.filter(item => item.tipo_elemento_afectado)
-            .map(item => ({
-              elemento_afectadoid: item.tipo_elemento_afectado.tipo_elemento_afectadoid,
-              nombre: item.tipo_elemento_afectado.nombre,
-              cantidad_estimada: item.cantidad_estimada || 0
-            })) || [];
-          
-          const reqTotalElements = formattedElements.reduce((sum, elem) => sum + elem.cantidad_estimada, 0);
-          // Calculate effort as 1.5 hours per element (simplified formula)
-          const reqTotalEffort = reqTotalElements * 1.5;
-          
-          needTotalElements += reqTotalElements;
-          needTotalEffort += reqTotalEffort;
-          
-          requirementsWithElements.push({
-            requerimientoid: req.requerimientoid,
-            nombrerequerimiento: req.nombrerequerimiento,
-            elements: formattedElements,
-            totalElements: reqTotalElements,
-            totalEffort: reqTotalEffort
-          });
-        }
-        
-        projectTotalEffort += needTotalEffort;
-        
-        needsWithRequirements.push({
-          necesidadid: need.necesidadid,
-          nombrenecesidad: need.nombrenecesidad,
-          requirements: requirementsWithElements,
-          totalElements: needTotalElements,
-          totalEffort: needTotalEffort
+      if (paramError) throw paramError;
+      setParametros(parametrosData || []);
+
+      const { data: needs, error: needsError } = await supabase
+        .from("necesidad")
+        .select("necesidadid, nombrenecesidad")
+        .eq("proyectoid", projectId);
+
+      if (needsError) {
+        console.error("Error fetching needs:", needsError);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar las necesidades",
+          variant: "destructive",
         });
+        setLoading(false);
+        return;
       }
+
+      if (!needs || needs.length === 0) {
+        setNeedsEstimations([]);
+        setLoading(false);
+        return;
+      }
+
+      const needsWithEstimations = await Promise.all(
+        needs.map(async (need) => {
+          const { data: requirements, error: reqError } = await supabase
+            .from("requerimiento")
+            .select(
+              `
+              requerimientoid,
+              nombrerequerimiento,
+              punto_funcion (
+                cantidad_estimada,
+                tipo_elemento_afectado_id,
+                tipo_elemento_afectado (
+                  nombre
+                )
+              )
+            `
+            )
+            .eq("necesidadid", need.necesidadid);
+
+          if (reqError) {
+            console.error("Error fetching requirements:", reqError);
+            return {
+              ...need,
+              totalPF: 0,
+              totalEsfuerzo: 0,
+              requirements: [],
+            };
+          }
+
+          const complejidadParam = parametrosData?.find(
+            (p) => p.tipo_parametro_estimacion?.nombre === "Complejidad"
+          );
+
+          const formattedRequirements = await Promise.all(
+            (requirements || []).map(async (req) => {
+              const puntosFuncion = req.punto_funcion || [];
+              const pf = puntosFuncion.reduce(
+                (sum, pf) => sum + (pf.cantidad_estimada || 0),
+                0
+              );
+
+              const parametrosMultiplicar = parametrosData?.filter(
+                (p) =>
+                  p.tipo_parametro_estimacion?.haselementosafectados &&
+                  p.tipo_parametro_estimacion?.nombre !== "Complejidad"
+              ) || [];
+              
+              const parametrosSumar = parametrosData?.filter(
+                (p) => !p.tipo_parametro_estimacion?.haselementosafectados
+              ) || [];
+
+              const esfuerzoMultiplicativo = await Promise.all(
+                puntosFuncion.map(async (pf) => {
+                  if (!pf.tipo_elemento_afectado_id || !pf.cantidad_estimada) {
+                    return 0;
+                  }
+                  
+                  let factorComplejidad = 1;
+
+                  if (complejidadParam) {
+                    const { data: elementoAfectado } = await supabase
+                      .from("elemento_afectado")
+                      .select("factor, factor_ia")
+                      .eq(
+                        "tipo_elemento_afectadoid",
+                        pf.tipo_elemento_afectado_id
+                      )
+                      .eq(
+                        "parametro_estimacionid",
+                        complejidadParam.parametro_estimacionid
+                      )
+                      .maybeSingle();
+
+                    if (elementoAfectado) {
+                      factorComplejidad =
+                        elementoAfectado.factor_ia ||
+                        elementoAfectado.factor ||
+                        1;
+                    }
+                  }
+
+                  const factoresMultiplicativos = parametrosMultiplicar.reduce(
+                    (sum, param) => {
+                      const factorToUse = param.factor_ia || param.factor || 0;
+                      return (
+                        sum +
+                        (pf.cantidad_estimada || 0) * factorToUse * factorComplejidad
+                      );
+                    },
+                    0
+                  );
+
+                  return factoresMultiplicativos;
+                })
+              );
+
+              const totalEsfuerzoMultiplicativo = esfuerzoMultiplicativo.reduce(
+                (a, b) => a + b,
+                0
+              );
+
+              const esfuerzoAditivo = parametrosSumar.reduce((sum, param) => {
+                const factorToUse = param.factor_ia || param.factor || 0;
+                return sum + factorToUse;
+              }, 0);
+
+              const esfuerzoEstimado =
+                totalEsfuerzoMultiplicativo + esfuerzoAditivo;
+
+              return {
+                requerimientoid: req.requerimientoid,
+                nombrerequerimiento: req.nombrerequerimiento,
+                pf,
+                esfuerzoEstimado,
+                puntosFuncion,
+              };
+            })
+          );
+
+          const totalPF = formattedRequirements.reduce(
+            (sum, req) => sum + req.pf,
+            0
+          );
+
+          const totalEsfuerzo = formattedRequirements.reduce(
+            (sum, req) => sum + req.esfuerzoEstimado,
+            0
+          );
+
+          return {
+            ...need,
+            totalPF,
+            totalEsfuerzo,
+            requirements: formattedRequirements,
+          };
+        })
+      );
+
+      setNeedsEstimations(needsWithEstimations);
       
-      setNeeds(needsWithRequirements);
-      setTotalProjectEffort(projectTotalEffort);
-      setTotalProjectHours(projectTotalEffort);
+      // Calculate project total
+      const projectTotal = needsWithEstimations.reduce(
+        (sum, need) => sum + need.totalEsfuerzo, 
+        0
+      );
+      setTotalProjectHours(projectTotal);
+      
     } catch (error) {
-      console.error('Error fetching estimation data:', error);
+      console.error("Error fetching data:", error);
       toast({
         title: "Error",
-        description: "No se pudo cargar los datos de estimación",
+        description: "No se pudieron cargar las estimaciones",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -177,47 +302,73 @@ const ProjectEstimationsSheet = ({ projectId, open, onOpenChange }: ProjectEstim
     return num.toFixed(2);
   };
 
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchEstimations();
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-[720px] overflow-y-auto">
-        <SheetHeader className="mb-6">
-          <SheetTitle>Project Estimations</SheetTitle>
+        <SheetHeader className="mb-4">
+          <div className="flex items-center justify-between">
+            <SheetTitle>Estimaciones del Proyecto</SheetTitle>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={refreshing || loading}
+            >
+              {refreshing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Actualizar
+            </Button>
+          </div>
         </SheetHeader>
 
         {loading ? (
           <div className="flex items-center justify-center h-40">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
             <p>Cargando estimaciones...</p>
           </div>
         ) : (
           <>
-            <div className="mb-6">
-              <p className="text-lg font-medium">Esfuerzo total: {formatNumber(totalProjectEffort)}</p>
-              <p className="text-sm text-gray-500">Esfuerzo (horas): {formatNumber(totalProjectHours)}</p>
+            <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Esfuerzo Total (hrs)</p>
+                  <p className="text-2xl font-semibold">{formatNumber(totalProjectHours)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Necesidades</p>
+                  <p className="text-2xl font-semibold">{needsEstimations.length}</p>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4">
-              {needs.map((need) => (
-                <div key={need.necesidadid} className="border rounded-lg overflow-hidden">
+              {needsEstimations.map((need) => (
+                <div key={need.necesidadid} className="border rounded-lg overflow-hidden shadow-sm">
                   <div 
-                    className="flex justify-between items-center p-4 bg-gray-50 cursor-pointer"
+                    className="flex justify-between items-center p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
                     onClick={() => toggleNeed(need.necesidadid)}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">
-                        Necesidad {need.necesidadid}
+                      <span className="font-medium truncate max-w-[200px]">
+                        {need.nombrenecesidad}
                       </span>
-                      <span>
-                        ({need.requirements.length} requerimientos):
+                      <span className="text-sm text-muted-foreground">
+                        ({need.requirements.length} requerimientos)
                       </span>
-                      {need.totalElements === 0 && (
+                      {need.totalEsfuerzo === 0 && (
                         <AlertCircle className="h-4 w-4 text-amber-500" />
                       )}
                     </div>
                     <div className="flex flex-col items-end">
-                      <p className="text-sm">Total Cantidad de elementos: {formatNumber(need.totalElements)}</p>
-                      <p className="text-sm">Esfuerzo: {formatNumber(need.totalEffort)}</p>
-                      <div className="flex items-center gap-1">
-                        <p className="text-sm">Horas: {formatNumber(need.totalEffort)}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm">Puntos de función: {formatNumber(need.totalPF)}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">Esfuerzo: {formatNumber(need.totalEsfuerzo)} hrs</p>
                         {expandedNeeds.has(need.necesidadid) ? 
                           <ChevronUp className="h-4 w-4" /> : 
                           <ChevronDown className="h-4 w-4" />
@@ -229,19 +380,18 @@ const ProjectEstimationsSheet = ({ projectId, open, onOpenChange }: ProjectEstim
                   {expandedNeeds.has(need.necesidadid) && (
                     <div className="px-4 pb-2">
                       {need.requirements.map((req) => (
-                        <div key={req.requerimientoid} className="border-t pt-2">
+                        <div key={req.requerimientoid} className="border-t pt-2 mt-2">
                           <div 
-                            className="flex justify-between items-center py-2 cursor-pointer"
+                            className="flex justify-between items-center py-2 cursor-pointer hover:bg-gray-50 px-2 rounded transition-colors"
                             onClick={() => toggleRequirement(req.requerimientoid)}
                           >
                             <div>
-                              <p className="font-medium">{req.nombrerequerimiento}</p>
+                              <p className="font-medium truncate max-w-[300px]">{req.nombrerequerimiento}</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="flex flex-col items-end">
-                                <p className="text-sm">Cantidad de elementos: {formatNumber(req.totalElements)}</p>
-                                <p className="text-sm">Esfuerzo: {formatNumber(req.totalEffort)}</p>
-                                <p className="text-sm">Horas: {formatNumber(req.totalEffort)}</p>
+                                <p className="text-sm">PF: {formatNumber(req.pf)}</p>
+                                <p className="text-sm font-medium">Esfuerzo: {formatNumber(req.esfuerzoEstimado)} hrs</p>
                               </div>
                               {expandedRequirements.has(req.requerimientoid) ? 
                                 <ChevronUp className="h-4 w-4" /> : 
@@ -251,16 +401,21 @@ const ProjectEstimationsSheet = ({ projectId, open, onOpenChange }: ProjectEstim
                           </div>
                           
                           {expandedRequirements.has(req.requerimientoid) && (
-                            <div className="pl-4 py-2 space-y-1">
-                              {req.elements.length > 0 ? (
-                                req.elements.map((elem, idx) => (
-                                  <div key={idx} className="flex justify-between text-sm">
-                                    <span>{elem.nombre}</span>
-                                    <span>{formatNumber(elem.cantidad_estimada)}</span>
-                                  </div>
-                                ))
+                            <div className="pl-4 py-2 space-y-1 bg-gray-50 rounded-md mb-2">
+                              <p className="text-sm font-medium mb-2">Elementos afectados:</p>
+                              {req.puntosFuncion.filter(pf => pf.cantidad_estimada && pf.cantidad_estimada > 0).length > 0 ? (
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                  {req.puntosFuncion
+                                    .filter(pf => pf.cantidad_estimada && pf.cantidad_estimada > 0)
+                                    .map((pf, idx) => (
+                                      <div key={idx} className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">{pf.tipo_elemento_afectado?.nombre}:</span>
+                                        <span className="font-medium">{pf.cantidad_estimada}</span>
+                                      </div>
+                                    ))}
+                                </div>
                               ) : (
-                                <p className="text-sm text-gray-500 italic">No hay elementos afectados</p>
+                                <p className="text-sm text-gray-500 italic">No hay elementos afectados con cantidad mayor a cero</p>
                               )}
                             </div>
                           )}
@@ -271,7 +426,7 @@ const ProjectEstimationsSheet = ({ projectId, open, onOpenChange }: ProjectEstim
                 </div>
               ))}
 
-              {needs.length === 0 && (
+              {needsEstimations.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-gray-500">No hay necesidades o estimaciones disponibles</p>
                 </div>
