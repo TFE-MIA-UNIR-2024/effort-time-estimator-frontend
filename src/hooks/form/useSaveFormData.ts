@@ -10,7 +10,7 @@ interface SaveFormDataParams {
   parametros: Record<number, string>;
   elementos: Element[];
   dataExists: boolean;
-  elementosFields: { id: number; label: string }[]; // Add this parameter
+  elementosFields: { id: number; label: string }[];
 }
 
 export const useSaveFormData = () => {
@@ -62,32 +62,33 @@ export const useSaveFormData = () => {
         });
       }
       
-      // Create a map of elements by ID for easy lookup
-      const elementosMap = new Map<number, Element>();
+      // Process each elemento from elementos array
       elementos.forEach(elemento => {
-        const id = elemento.tipo_elemento_afectado_id || elemento.elemento_id;
-        elementosMap.set(id, elemento);
+        if (elemento.cantidad_estimada !== undefined && elemento.cantidad_estimada !== null) {
+          // Create punto_funcion record for this elemento
+          inserts.push({
+            requerimientoid: requerimientoId,
+            tipo_elemento_afectado_id: elemento.tipo_elemento_afectado_id || elemento.elemento_id,
+            cantidad_estimada: elemento.cantidad_estimada,
+            cantidad_real: elemento.cantidad_real
+          });
+        }
       });
       
-      // Process each elemento from elementosFields to ensure all are included
+      // Fill in missing elementos from elementosFields to ensure all are included
+      const existingElementIds = new Set(elementos.map(el => el.tipo_elemento_afectado_id || el.elemento_id));
+      
       elementosFields.forEach(field => {
-        const elemento = elementosMap.get(field.id) || {
-          elemento_id: field.id,
-          nombre: field.label,
-          cantidad_estimada: 0,
-          cantidad_real: null,
-          tipo_elemento_afectado_id: field.id
-        };
-        
-        // Create punto_funcion record for this elemento
-        inserts.push({
-          requerimientoid: requerimientoId,
-          tipo_elemento_afectado_id: elemento.tipo_elemento_afectado_id || elemento.elemento_id,
-          cantidad_estimada: elemento.cantidad_estimada
-        });
+        if (!existingElementIds.has(field.id)) {
+          inserts.push({
+            requerimientoid: requerimientoId,
+            tipo_elemento_afectado_id: field.id,
+            cantidad_estimada: 0
+          });
+        }
       });
       
-      console.log("Records to insert:", inserts);
+      console.log(`Inserting ${inserts.length} records for requirement ID ${requerimientoId}`);
       
       if (inserts.length > 0) {
         const { error: insertError } = await supabase

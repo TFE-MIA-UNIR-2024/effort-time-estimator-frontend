@@ -44,17 +44,33 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
   const { handleSave: saveFormDataFn } = useSaveFormData();
   
   // Use the modular hooks
-  const { loading, parametros: fetchedParametros, elementos: fetchedElementos, tiposParametros, dataExists, requirement } = 
-    useFetchFormData(requerimientoId, isOpen);
+  const { 
+    loading, 
+    parametros: fetchedParametros, 
+    elementos: fetchedElementos, 
+    tiposParametros, 
+    dataExists, 
+    requirement 
+  } = useFetchFormData(requerimientoId, isOpen);
   
   const { parametros, handleParametroChange, setParametros } = useParametersState();
   const { elementos, handleElementChange, setElementos } = useElementsState();
   const { aiLoading, handleGenerateAIEstimation: generateAIEstimation } = 
     useAIEstimationHandler(elementos, setElementos, elementosFields, requirement);
 
+  // Reset and re-fetch data when requirement ID changes or form opens
+  useEffect(() => {
+    if (isOpen) {
+      // Reset states when opening for a different requirement
+      setParametros({});
+      setElementos([]);
+    }
+  }, [requerimientoId, isOpen, setParametros, setElementos]);
+
   // Sync state from fetched data using useEffect
   useEffect(() => {
     if (!loading && fetchedParametros && fetchedElementos) {
+      console.log(`For requirement ID ${requerimientoId}:`);
       console.log("Parameters fetched:", Object.keys(fetchedParametros).length);
       console.log("Elements fetched:", fetchedElementos.length);
       console.log("Parameter types fetched:", tiposParametros.length);
@@ -64,10 +80,14 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
       
       // Update elements state with fetched data
       if (fetchedElementos.length > 0) {
+        console.log("Setting elementos:", fetchedElementos);
         setElementos(fetchedElementos);
+      } else {
+        // Reset elementos if none were fetched
+        setElementos([]);
       }
     }
-  }, [loading, fetchedParametros, fetchedElementos, tiposParametros, setParametros, setElementos]);
+  }, [loading, fetchedParametros, fetchedElementos, tiposParametros, setParametros, setElementos, requerimientoId]);
 
   // Validate that all required parameters have values
   const validateForm = () => {
@@ -96,12 +116,16 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
     }
 
     try {
+      console.log(`Saving form data for requirement ID ${requerimientoId}`);
+      console.log("Parameters:", parametros);
+      console.log("Elements:", elementos);
+      
       const success = await saveFormDataFn({
         requerimientoId,
         parametros,
         elementos,
         dataExists,
-        elementosFields // Pass elementosFields to the save function
+        elementosFields
       });
       
       if (success) {

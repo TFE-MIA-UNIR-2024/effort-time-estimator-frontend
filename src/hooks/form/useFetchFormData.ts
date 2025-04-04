@@ -31,6 +31,8 @@ export function useFetchFormData(requerimientoId: number, isOpen: boolean): Fetc
   const fetchData = async () => {
     setLoading(true);
     try {
+      console.log("Fetching data for requirement ID:", requerimientoId);
+      
       // Fetch requirement details
       const { data: reqData, error: reqError } = await supabase
         .from('requerimiento')
@@ -58,7 +60,7 @@ export function useFetchFormData(requerimientoId: number, isOpen: boolean): Fetc
       if (tiposError) throw tiposError;
       setTiposParametros(tiposData || []);
       
-      // Fetch existing data
+      // Fetch existing data for THIS specific requirement
       const { data: existingData, error: existingError } = await supabase
         .from('punto_funcion')
         .select(`
@@ -71,6 +73,8 @@ export function useFetchFormData(requerimientoId: number, isOpen: boolean): Fetc
         .eq('requerimientoid', requerimientoId);
       
       if (existingError) throw existingError;
+      
+      console.log(`Retrieved ${existingData?.length || 0} punto_funcion records for requirement ID ${requerimientoId}`);
       
       // Initialize parameters as an empty object
       const initialParametros: Record<number, string> = {};
@@ -106,25 +110,33 @@ export function useFetchFormData(requerimientoId: number, isOpen: boolean): Fetc
         const elementIds = Object.keys(groupedByParametro.elements).map(Number);
         if (elementIds.length > 0) {
           const { data: elementNames, error: elementError } = await supabase
-            .from('elemento_afectado')
-            .select('elemento_afectadoid, nombre')
-            .in('elemento_afectadoid', elementIds);
+            .from('tipo_elemento_afectado')
+            .select('tipo_elemento_afectadoid, nombre')
+            .in('tipo_elemento_afectadoid', elementIds);
           
           if (elementError) throw elementError;
           
           // Create elements array with values
-          const initialElementos = elementNames?.map((elem: any) => {
-            const elemData = groupedByParametro.elements[elem.elemento_afectadoid][0];
+          const initialElementos = elementIds.map(elementId => {
+            const elementData = groupedByParametro.elements[elementId];
+            const elementName = elementNames?.find((elem: any) => elem.tipo_elemento_afectadoid === elementId);
+            
+            if (!elementName) {
+              console.warn(`Could not find element name for ID ${elementId}`);
+              return null;
+            }
+            
             return {
-              elemento_id: elem.elemento_afectadoid,
-              nombre: elem.nombre,
-              cantidad_estimada: elemData.cantidad_estimada,
-              cantidad_real: elemData.cantidad_real,
-              tipo_elemento_afectado_id: elemData.tipo_elemento_afectado_id,
-              punto_funcionid: elemData.punto_funcionid
+              elemento_id: elementId,
+              nombre: elementName.nombre,
+              cantidad_estimada: elementData[0].cantidad_estimada,
+              cantidad_real: elementData[0].cantidad_real,
+              tipo_elemento_afectado_id: elementId,
+              punto_funcionid: elementData[0].punto_funcionid
             };
-          }) || [];
+          }).filter(Boolean);
           
+          console.log(`Created ${initialElementos.length} elementos for requirement ID ${requerimientoId}`);
           setElementos(initialElementos);
         }
       }
