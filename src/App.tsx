@@ -11,28 +11,26 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 
+// Create a QueryClient instance outside the component to avoid recreating it on each render
+const queryClient = new QueryClient();
+
 const App = () => {
-  // Create a QueryClient instance inside the component
-  const queryClient = new QueryClient();
-  
   return (
     <QueryClientProvider client={queryClient}>
-      <React.StrictMode>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/project/:id" element={<ProjectDetail />} />
-              <Route path="/need/:id" element={<NeedDetail />} />
-              <Route path="/auth" element={<Auth />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </React.StrictMode>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/project/:id" element={<ProjectDetail />} />
+            <Route path="/need/:id" element={<NeedDetail />} />
+            <Route path="/auth" element={<Auth />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };
