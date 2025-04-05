@@ -23,7 +23,7 @@ interface RequirementItemProps {
 }
 
 const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: RequirementItemProps) => {
-  // Calculate effort per function point for this requirement
+  // Calculate effort per function point for this requirement (if there are PF)
   const effortPerFP = requirement.pf > 0 ? (requirement.esfuerzoEstimado / requirement.pf) : 0;
 
   return (

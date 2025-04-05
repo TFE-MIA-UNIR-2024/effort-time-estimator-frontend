@@ -76,7 +76,7 @@ export const fetchRequirementsForNeed = async (needId: number): Promise<any[] | 
   return data;
 };
 
-// Calculate estimation factors for a specific punto_funcion
+// Calculate estimation factors for a specific punto_funcion (simplified - only multiplicative)
 export const calculateEstimationFactors = async (
   pf: PuntoFuncion,
   parametros: ParametroEstimacion[],
@@ -112,8 +112,7 @@ export const calculateEstimationFactors = async (
 
   const parametrosMultiplicar = parametros.filter(
     (p) =>
-      p.tipo_parametro_estimacion?.haselementosafectados &&
-      p.tipo_parametro_estimacion?.nombre !== "Complejidad"
+      p.tipo_parametro_estimacion?.haselementosafectados
   );
 
   const factoresMultiplicativos = parametrosMultiplicar.reduce(
@@ -130,19 +129,7 @@ export const calculateEstimationFactors = async (
   return factoresMultiplicativos;
 };
 
-// Calculate additive parameters
-export const calculateAdditiveEffort = (parametros: ParametroEstimacion[]): number => {
-  const parametrosSumar = parametros.filter(
-    (p) => !p.tipo_parametro_estimacion?.haselementosafectados
-  );
-
-  return parametrosSumar.reduce((sum, param) => {
-    const factorToUse = param.factor_ia || param.factor || 0;
-    return sum + factorToUse;
-  }, 0);
-};
-
-// Process requirements for a need and calculate estimations
+// Process requirements for a need and calculate estimations (simplified - no additive)
 export const processRequirements = async (
   requirements: any[],
   parametros: ParametroEstimacion[]
@@ -178,19 +165,16 @@ export const processRequirements = async (
         )
       );
 
-      const totalEsfuerzoMultiplicativo = esfuerzoMultiplicativo.reduce(
+      const totalEsfuerzo = esfuerzoMultiplicativo.reduce(
         (a, b) => a + b,
         0
       );
-
-      const esfuerzoAditivo = calculateAdditiveEffort(parametros);
-      const esfuerzoEstimado = totalEsfuerzoMultiplicativo + esfuerzoAditivo;
 
       return {
         requerimientoid: req.requerimientoid,
         nombrerequerimiento: req.nombrerequerimiento,
         pf,
-        esfuerzoEstimado,
+        esfuerzoEstimado: totalEsfuerzo,
         puntosFuncion,
       };
     })
