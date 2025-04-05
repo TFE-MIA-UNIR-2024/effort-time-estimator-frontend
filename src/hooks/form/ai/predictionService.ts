@@ -31,7 +31,7 @@ const DEFAULT_PREDICTIONS = {
 
 export async function getPredictions(elementIds: number[]): Promise<Record<number, number>> {
   try {
-    console.log("Calling prediction endpoint with IDs:", elementIds);
+    console.log("Calling prediction endpoint with selected IDs:", elementIds);
     
     // Set a timeout to handle slow connections
     const controller = new AbortController();
@@ -69,14 +69,14 @@ export async function getPredictions(elementIds: number[]): Promise<Record<numbe
   } catch (error) {
     console.error("Error calling prediction API:", error);
     
-    // Return default values when API is not available
-    console.log("Using default predictions as fallback");
+    // Return default values for the requested IDs when API is not available
+    console.log("Using default predictions as fallback for selected IDs");
     const fallbackPredictions: Record<number, number> = {};
     
-    // Include all default values for IDs 1-13 instead of just requested IDs
-    for (let i = 1; i <= 13; i++) {
-      fallbackPredictions[i] = DEFAULT_PREDICTIONS[i as keyof typeof DEFAULT_PREDICTIONS] || 1;
-    }
+    // Only include requested IDs in the fallback
+    elementIds.forEach(id => {
+      fallbackPredictions[id] = DEFAULT_PREDICTIONS[id as keyof typeof DEFAULT_PREDICTIONS] || 1;
+    });
     
     return fallbackPredictions;
   }

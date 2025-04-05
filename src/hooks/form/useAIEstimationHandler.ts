@@ -14,7 +14,7 @@ export function useAIEstimationHandler(
   const { toast } = useToast();
   const { generateWeights } = useAIEstimation();
 
-  const handleGenerateAIEstimation = async () => {
+  const handleGenerateAIEstimation = async (selectedIds?: number[]) => {
     if (!requirement) {
       toast({
         title: "Error",
@@ -27,10 +27,12 @@ export function useAIEstimationHandler(
     setAILoading(true);
     try {
       console.log("Generating AI estimation for requirement:", requirement.nombrerequerimiento);
+      console.log("Using selected element IDs:", selectedIds || "all elements");
       
       const weights = await generateWeights(
         requirement.nombrerequerimiento,
-        requirement.cuerpo || ""
+        requirement.cuerpo || "",
+        selectedIds
       );
 
       console.log("AI generated weights:", weights);

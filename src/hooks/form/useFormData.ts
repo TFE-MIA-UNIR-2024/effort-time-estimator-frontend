@@ -17,7 +17,7 @@ interface FormData {
   handleElementChange: (elementId: number, value: string) => void;
   handleParametroChange: (parametroId: number, value: string) => void;
   handleSave: () => Promise<boolean>;
-  handleGenerateAIEstimation: () => Promise<void>;
+  handleGenerateAIEstimation: (selectedIds?: number[]) => Promise<void>;
   aiLoading: boolean;
   validateForm: () => boolean;
 }
@@ -146,8 +146,8 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
   };
 
   // Wrapper for the AI estimation function to ensure it uses the current state
-  const handleGenerateAIEstimation = async () => {
-    await generateAIEstimation();
+  const handleGenerateAIEstimation = async (selectedIds?: number[]) => {
+    await generateAIEstimation(selectedIds);
   };
 
   return {

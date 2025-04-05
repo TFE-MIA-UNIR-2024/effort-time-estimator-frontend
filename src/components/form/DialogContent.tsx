@@ -8,6 +8,7 @@ import ParametersSection from "./ParametersSection";
 import ElementsSection from "./ElementsSection";
 import { Element } from "@/hooks/form/types";
 import { TipoParametroEstimacion } from "@/hooks/form/useFormParameters";
+import AISelectionModal from "./AISelectionModal";
 
 interface DialogContentProps {
   loading: boolean;
@@ -20,7 +21,7 @@ interface DialogContentProps {
   onClose: () => void;
   onSave: () => Promise<void>;
   dataExists: boolean;
-  handleGenerateAIEstimation: () => Promise<void>;
+  handleGenerateAIEstimation: (selectedIds?: number[]) => Promise<void>;
   aiLoading: boolean;
 }
 
@@ -39,6 +40,7 @@ const DialogContentComponent = ({
   aiLoading,
 }: DialogContentProps) => {
   const [showValidation, setShowValidation] = useState(false);
+  const [aiSelectionOpen, setAiSelectionOpen] = useState(false);
   
   // Check if all required parameters have values
   const validateForm = () => {
@@ -52,10 +54,10 @@ const DialogContentComponent = ({
     }
   };
 
-  const handleGenerateAI = async () => {
-    console.log("Generating AI estimation with elementos:", elementos);
+  const handleGenerateAI = async (selectedIds: number[]) => {
+    console.log("Generating AI estimation with selected element IDs:", selectedIds);
     console.log("Element fields:", elementosFields);
-    await handleGenerateAIEstimation();
+    await handleGenerateAIEstimation(selectedIds);
   };
 
   if (loading) {
@@ -94,7 +96,7 @@ const DialogContentComponent = ({
           <Button
             type="button"
             variant="outline"
-            onClick={handleGenerateAI}
+            onClick={() => setAiSelectionOpen(true)}
             disabled={aiLoading || !validateForm()}
             className="w-full"
           >
@@ -120,6 +122,14 @@ const DialogContentComponent = ({
           {dataExists ? "Actualizar" : "Guardar"}
         </Button>
       </div>
+
+      <AISelectionModal
+        open={aiSelectionOpen}
+        onOpenChange={setAiSelectionOpen}
+        elementosFields={elementosFields}
+        onConfirm={handleGenerateAI}
+        isLoading={aiLoading}
+      />
     </>
   );
 };

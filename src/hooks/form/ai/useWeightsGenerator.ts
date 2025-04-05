@@ -5,18 +5,23 @@ import { getPredictions } from "./predictionService";
 // All element IDs that should be included in the response - explicitly ensure IDs 1-13
 const ALL_ELEMENT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
-// Selected IDs for prediction based on the image example - we'll use more to have better coverage
-const PREDICTION_IDS = [2, 4, 7, 8, 12]; // Triggers/SP, Formularios, Reportes, Componentes, QA
+// Default selected IDs for prediction if none are provided
+const DEFAULT_PREDICTION_IDS = [2, 4, 7, 8, 12]; // Triggers/SP, Formularios, Reportes, Componentes, QA
 
 export const generateWeights = async (
   title: string,
-  body: string
+  body: string,
+  selectedIds?: number[]
 ): Promise<WeightFormData> => {
   try {
     console.log("Generating weights for title:", title);
     
+    // Use provided selectedIds or default to a predefined set
+    const predictionIds = selectedIds || DEFAULT_PREDICTION_IDS;
+    console.log("Using prediction IDs:", predictionIds);
+    
     // Get predictions for selected element types
-    const predictionMap = await getPredictions(PREDICTION_IDS);
+    const predictionMap = await getPredictions(predictionIds);
     console.log("Predictions received:", predictionMap);
     
     // Map element IDs to their labels
