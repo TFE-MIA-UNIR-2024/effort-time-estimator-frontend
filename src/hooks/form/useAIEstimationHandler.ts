@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Element } from "./types";
@@ -42,7 +41,12 @@ export function useAIEstimationHandler(
         const existingElement = elementos.find(e => 
           e.elemento_id === field.id || e.tipo_elemento_afectado_id === field.id
         );
-        const value = weights[field.label] || 0;
+        
+        // If this element ID is in selectedIds (or selectedIds is undefined), use the AI prediction
+        // Otherwise, set the value to zero
+        const value = selectedIds 
+          ? (selectedIds.includes(field.id) ? weights[field.label] || 0 : 0)
+          : weights[field.label] || 0;
 
         return existingElement 
           ? { ...existingElement, cantidad_estimada: value }
@@ -57,6 +61,8 @@ export function useAIEstimationHandler(
 
       console.log("New elementos after AI generation:", newElementos);
       console.log("Total AI-generated elementos:", newElementos.length);
+      console.log("Elements set to zero:", elementosFields.filter(field => 
+        !selectedIds?.includes(field.id)).map(field => field.label));
       
       setElementos(newElementos);
       

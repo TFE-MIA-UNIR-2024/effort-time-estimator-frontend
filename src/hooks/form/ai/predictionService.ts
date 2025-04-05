@@ -73,10 +73,14 @@ export async function getPredictions(elementIds: number[]): Promise<Record<numbe
     console.log("Using default predictions as fallback for selected IDs");
     const fallbackPredictions: Record<number, number> = {};
     
-    // Only include requested IDs in the fallback
-    elementIds.forEach(id => {
-      fallbackPredictions[id] = DEFAULT_PREDICTIONS[id as keyof typeof DEFAULT_PREDICTIONS] || 1;
-    });
+    // Only include requested IDs in the fallback, others will be zero
+    // We explicitly map through all possible IDs (1-13) to ensure all are covered
+    for (let id = 1; id <= 13; id++) {
+      // Set the value to default prediction if it's in the requested IDs, otherwise set to 0
+      fallbackPredictions[id] = elementIds.includes(id) 
+        ? DEFAULT_PREDICTIONS[id as keyof typeof DEFAULT_PREDICTIONS] || 0
+        : 0;
+    }
     
     return fallbackPredictions;
   }

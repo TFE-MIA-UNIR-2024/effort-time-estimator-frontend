@@ -41,62 +41,86 @@ export const generateWeights = async (
       13: "PF",
     };
     
-    // Create weights object with all required properties initialized to default values
+    // Create a base weights object with all values set to 0
     const weights: WeightFormData = {
-      "Tablas": 1,
-      "Triggers/SP": 2,
-      "Interfaces c/aplicativos": 1,
-      "Formularios": 3,
-      "Subrutinas complejas": 2,
-      "Interfaces con BD": 1,
-      "Reportes": 2,
-      "Componentes": 3,
-      "Javascript": 2,
-      "Componentes Config. y Pruebas": 1,
+      "Tablas": 0,
+      "Triggers/SP": 0,
+      "Interfaces c/aplicativos": 0,
+      "Formularios": 0,
+      "Subrutinas complejas": 0,
+      "Interfaces con BD": 0,
+      "Reportes": 0,
+      "Componentes": 0,
+      "Javascript": 0,
+      "Componentes Config. y Pruebas": 0,
       "Despliegue app movil": 0,
-      "QA": 4,
-      "PF": 5
+      "QA": 0,
+      "PF": 0
     };
     
-    // Update weights with predicted values where available
+    // Update weights with predicted values ONLY for the selected IDs
     Object.entries(predictionMap).forEach(([id, value]) => {
       const numericId = Number(id);
       const label = idToLabel[numericId];
-      if (label) {
+      if (label && (predictionIds.includes(numericId) || !selectedIds)) {
         weights[label] = value;
       }
     });
     
     console.log("Final generated weights:", weights);
     
-    // Ensure all 13 elements have values
-    ALL_ELEMENT_IDS.forEach(id => {
-      const label = idToLabel[id];
-      if (label && weights[label] === undefined) {
-        weights[label] = id === 13 ? 5 : Math.floor(Math.random() * 5) + 1; // Default values
-      }
-    });
+    // PF is a special case that should always have a value of 5 unless explicitly set otherwise
+    if (selectedIds?.includes(13) || !selectedIds) {
+      weights["PF"] = predictionMap[13] !== undefined ? predictionMap[13] : 5;
+    }
     
     return weights;
   } catch (error) {
     console.error("Error generating weights:", error);
     
-    // If there's an error, return default values for all 13 elements
+    // If there's an error, return default values ONLY for selected IDs, others set to 0
     const defaultWeights: WeightFormData = {
-      "Tablas": 1,
-      "Triggers/SP": 2,
-      "Interfaces c/aplicativos": 1,
-      "Formularios": 3,
-      "Subrutinas complejas": 2,
-      "Interfaces con BD": 1,
-      "Reportes": 2,
-      "Componentes": 3,
-      "Javascript": 2,
-      "Componentes Config. y Pruebas": 1,
+      "Tablas": 0,
+      "Triggers/SP": 0,
+      "Interfaces c/aplicativos": 0,
+      "Formularios": 0,
+      "Subrutinas complejas": 0,
+      "Interfaces con BD": 0,
+      "Reportes": 0,
+      "Componentes": 0,
+      "Javascript": 0,
+      "Componentes Config. y Pruebas": 0,
       "Despliegue app movil": 0,
-      "QA": 4,
-      "PF": 5
+      "QA": 0,
+      "PF": 0
     };
+    
+    // Set default values only for selected IDs
+    if (selectedIds) {
+      selectedIds.forEach(id => {
+        const label = ALL_ELEMENT_IDS.includes(id) ? 
+          Object.entries(idToLabel).find(([key, val]) => Number(key) === id)?.[1] : null;
+        
+        if (label) {
+          defaultWeights[label] = id === 13 ? 5 : DEFAULT_PREDICTION_IDS.includes(id) ? 
+            (id === 2 ? 2 : id === 4 ? 3 : id === 7 ? 2 : id === 8 ? 3 : id === 12 ? 4 : 1) : 1;
+        }
+      });
+    } else {
+      // If no selectedIds provided, use defaults for common elements
+      defaultWeights["Tablas"] = 1;
+      defaultWeights["Triggers/SP"] = 2;
+      defaultWeights["Interfaces c/aplicativos"] = 1;
+      defaultWeights["Formularios"] = 3;
+      defaultWeights["Subrutinas complejas"] = 2;
+      defaultWeights["Interfaces con BD"] = 1;
+      defaultWeights["Reportes"] = 2;
+      defaultWeights["Componentes"] = 3;
+      defaultWeights["Javascript"] = 2;
+      defaultWeights["Componentes Config. y Pruebas"] = 1;
+      defaultWeights["QA"] = 4;
+      defaultWeights["PF"] = 5;
+    }
     
     return defaultWeights;
   }
