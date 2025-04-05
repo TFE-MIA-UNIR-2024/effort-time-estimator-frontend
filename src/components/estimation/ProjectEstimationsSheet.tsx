@@ -34,6 +34,9 @@ const ProjectEstimationsSheet = ({ projectId, open, onOpenChange }: ProjectEstim
           onRefresh={handleRefresh} 
           refreshing={refreshing} 
           loading={loading} 
+          totalProjectHours={totalProjectHours}
+          formatNumber={formatNumber}
+          projectId={projectId}
         />
 
         {loading ? (
