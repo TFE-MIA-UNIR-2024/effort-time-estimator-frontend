@@ -1,13 +1,7 @@
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, AlertCircle, Info } from "lucide-react";
+import { ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import RequirementItem from "./RequirementItem";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface PuntoFuncion {
   cantidad_estimada: number | null;
@@ -73,49 +67,22 @@ const NeedEstimationItem = ({ need, expanded, onToggle, formatNumber }: NeedEsti
             ({need.requirements.length} requerimientos)
           </span>
           {need.totalEsfuerzo === 0 && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <AlertCircle 
-                    className="h-4 w-4 text-amber-500 cursor-help" 
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-sm">Sin esfuerzo estimado</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <AlertCircle 
+              className="h-4 w-4 text-amber-500" 
+              aria-label="Sin esfuerzo estimado" 
+            />
           )}
         </div>
         <div className="flex flex-col items-end">
           <div className="flex items-center gap-2">
             <p className="text-sm">Puntos de función: {formatNumber(need.totalPF)}</p>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-sm">Suma de todos los elementos afectados</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
           </div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium">Esfuerzo: {formatNumber(need.totalEsfuerzo)} hrs</p>
             {hasAnyFunctionPoints && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <p className="text-xs text-muted-foreground cursor-help">
-                      ({formatNumber(effortPerFP)} hrs/PF)
-                    </p>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-sm">Esfuerzo por punto de función</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <p className="text-xs text-muted-foreground">
+                ({formatNumber(effortPerFP)} hrs/PF)
+              </p>
             )}
             {expanded ? 
               <ChevronUp className="h-4 w-4" /> : 
@@ -126,32 +93,17 @@ const NeedEstimationItem = ({ need, expanded, onToggle, formatNumber }: NeedEsti
       </div>
 
       {expanded && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-2">
           {need.requirements.length > 0 ? (
-            <>
-              <div className="pt-3 pb-2">
-                <div className="bg-blue-50 border border-blue-100 px-4 py-3 rounded-md">
-                  <h4 className="text-sm font-medium text-blue-800 flex items-center mb-1">
-                    <Info className="h-4 w-4 mr-2" />
-                    Información del cálculo
-                  </h4>
-                  <p className="text-xs text-blue-700">
-                    El cálculo se basa en la suma de esfuerzos por cada requerimiento. 
-                    Cada requerimiento combina los elementos afectados multiplicados por 
-                    sus factores correspondientes.
-                  </p>
-                </div>
-              </div>
-              {need.requirements.map((req) => (
-                <RequirementItem
-                  key={req.requerimientoid}
-                  requirement={req}
-                  expanded={expandedRequirements.has(req.requerimientoid)}
-                  onToggle={() => toggleRequirement(req.requerimientoid)}
-                  formatNumber={formatNumber}
-                />
-              ))}
-            </>
+            need.requirements.map((req) => (
+              <RequirementItem
+                key={req.requerimientoid}
+                requirement={req}
+                expanded={expandedRequirements.has(req.requerimientoid)}
+                onToggle={() => toggleRequirement(req.requerimientoid)}
+                formatNumber={formatNumber}
+              />
+            ))
           ) : (
             <div className="py-3 text-center text-sm text-muted-foreground">
               No hay requerimientos con estimaciones.
