@@ -71,6 +71,27 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
           ) : (
             <p className="text-sm text-gray-500 italic">No hay elementos afectados con cantidad mayor a cero</p>
           )}
+          
+          {/* Calculation details section */}
+          {requirement.pf > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="text-sm font-medium mb-2">Cálculo de esfuerzo:</p>
+              <div className="bg-white p-2 rounded border border-gray-100 text-sm space-y-1">
+                <p>
+                  <span className="text-gray-600">Total puntos función:</span> 
+                  <span className="font-medium ml-2">{formatNumber(requirement.pf)} PF</span>
+                </p>
+                <p>
+                  <span className="text-gray-600">Esfuerzo por punto función:</span>
+                  <span className="font-medium ml-2">{formatNumber(effortPerFP)} hrs/PF</span>
+                </p>
+                <p>
+                  <span className="text-gray-600">Cálculo:</span>
+                  <span className="font-medium ml-2">{formatNumber(requirement.pf)} PF × {formatNumber(effortPerFP)} hrs = {formatNumber(requirement.esfuerzoEstimado)} hrs</span>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
