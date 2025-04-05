@@ -23,9 +23,6 @@ interface RequirementItemProps {
 }
 
 const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: RequirementItemProps) => {
-  // Calculate effort per function point for this requirement
-  const effortPerFP = requirement.pf > 0 ? (requirement.esfuerzoEstimado / requirement.pf) : 0;
-
   return (
     <div className="border-t pt-2 mt-2">
       <div 
@@ -38,14 +35,7 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-end">
             <p className="text-sm">PF: {formatNumber(requirement.pf)}</p>
-            <div className="flex items-center">
-              <p className="text-sm font-medium">Esfuerzo: {formatNumber(requirement.esfuerzoEstimado)} hrs</p>
-              {requirement.pf > 0 && (
-                <p className="text-xs text-muted-foreground ml-1">
-                  ({formatNumber(effortPerFP)} hrs/PF)
-                </p>
-              )}
-            </div>
+            <p className="text-sm font-medium">Esfuerzo: {formatNumber(requirement.esfuerzoEstimado)} hrs</p>
           </div>
           {expanded ? 
             <ChevronUp className="h-4 w-4" /> : 
@@ -75,59 +65,105 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
             )}
           </div>
           
-          {/* Cálculo detallado por punto de función */}
+          {/* Cálculo detallado de esfuerzo */}
           {requirement.pf > 0 && (
             <>
               <div className="pt-3 border-t border-gray-200">
-                <p className="text-sm font-medium mb-2">Desglose por tipo de elemento:</p>
+                <p className="text-sm font-medium mb-2">Desglose del cálculo de esfuerzo:</p>
+                <div className="bg-white p-3 rounded border border-gray-100 text-sm">
+                  <p className="mb-2 text-gray-600 text-xs">
+                    El cálculo de esfuerzo se realiza aplicando factores multiplicativos por tipo de elemento y 
+                    factores aditivos según los parámetros de estimación.
+                  </p>
+                  
+                  <div className="mb-3">
+                    <p className="font-medium mb-1">1. Factores multiplicativos (por elemento):</p>
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          <th className="text-left py-1 text-gray-600">Elemento</th>
+                          <th className="text-center py-1 text-gray-600">Cantidad</th>
+                          <th className="text-right py-1 text-gray-600">Contribución</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {requirement.puntosFuncion
+                          .filter(pf => pf.cantidad_estimada && pf.cantidad_estimada > 0)
+                          .map((pf, idx) => (
+                            <tr key={idx} className="border-b border-gray-50">
+                              <td className="py-1">{pf.tipo_elemento_afectado?.nombre}</td>
+                              <td className="text-center py-1">{pf.cantidad_estimada}</td>
+                              <td className="text-right py-1 font-medium">
+                                Factores específicos por elemento y complejidad
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  <div className="mb-3">
+                    <p className="font-medium mb-1">2. Factores aditivos:</p>
+                    <p className="ml-4 text-sm">
+                      Los parámetros sin elementos afectados se suman como horas adicionales
+                    </p>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-gray-100">
+                    <p className="font-medium mb-1">Resultado del cálculo:</p>
+                    <p className="ml-4">
+                      <span className="text-gray-600">Total:</span> 
+                      <span className="font-medium ml-2">{formatNumber(requirement.esfuerzoEstimado)} horas</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detalle por punto de función */}
+              <div className="pt-3 border-t border-gray-200">
+                <p className="text-sm font-medium mb-2">Detalle por tipo de elemento:</p>
                 <div className="bg-white p-3 rounded border border-gray-100 text-sm">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-100">
                         <th className="text-left py-1 text-gray-600">Elemento</th>
                         <th className="text-center py-1 text-gray-600">Cantidad</th>
-                        <th className="text-center py-1 text-gray-600">Esfuerzo (hrs)</th>
-                        <th className="text-right py-1 text-gray-600">Subtotal</th>
                       </tr>
                     </thead>
                     <tbody>
                       {requirement.puntosFuncion
                         .filter(pf => pf.cantidad_estimada && pf.cantidad_estimada > 0)
-                        .map((pf, idx) => {
-                          const subtotalEsfuerzo = (pf.cantidad_estimada || 0) * effortPerFP;
-                          return (
-                            <tr key={idx} className="border-b border-gray-50">
-                              <td className="py-1">{pf.tipo_elemento_afectado?.nombre}</td>
-                              <td className="text-center py-1">{pf.cantidad_estimada}</td>
-                              <td className="text-center py-1">{formatNumber(effortPerFP)}</td>
-                              <td className="text-right py-1 font-medium">{formatNumber(subtotalEsfuerzo)} hrs</td>
-                            </tr>
-                          );
-                        })}
+                        .map((pf, idx) => (
+                          <tr key={idx} className="border-b border-gray-50">
+                            <td className="py-1">{pf.tipo_elemento_afectado?.nombre}</td>
+                            <td className="text-center py-1">{pf.cantidad_estimada}</td>
+                          </tr>
+                        ))}
                       <tr className="bg-gray-50 font-medium">
-                        <td colSpan={3} className="py-1 text-right">Total:</td>
-                        <td className="text-right py-1">{formatNumber(requirement.esfuerzoEstimado)} hrs</td>
+                        <td className="py-1 text-right">Total puntos función:</td>
+                        <td className="text-center py-1">{formatNumber(requirement.pf)}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* Sección de cálculo de esfuerzo */}
+              {/* Descripción del método de cálculo */}
               <div className="pt-3 border-t border-gray-200">
-                <p className="text-sm font-medium mb-2">Fórmula de cálculo:</p>
+                <p className="text-sm font-medium mb-2">Método de cálculo:</p>
                 <div className="bg-white p-3 rounded border border-gray-100 text-sm space-y-1">
-                  <p>
-                    <span className="text-gray-600">Total puntos función:</span> 
-                    <span className="font-medium ml-2">{formatNumber(requirement.pf)} PF</span>
+                  <p className="text-xs text-gray-600">
+                    El esfuerzo se calcula mediante un modelo que utiliza:
                   </p>
-                  <p>
-                    <span className="text-gray-600">Esfuerzo por punto función:</span>
-                    <span className="font-medium ml-2">{formatNumber(effortPerFP)} hrs/PF</span>
-                  </p>
-                  <p>
-                    <span className="text-gray-600">Cálculo:</span>
-                    <span className="font-medium ml-2">{formatNumber(requirement.pf)} PF × {formatNumber(effortPerFP)} hrs = {formatNumber(requirement.esfuerzoEstimado)} hrs</span>
+                  <ul className="list-disc pl-5 text-xs space-y-1 text-gray-600">
+                    <li>Factores multiplicativos aplicados a cada elemento según su tipo y complejidad</li>
+                    <li>Factores específicos por cada tipo de elemento afectado</li>
+                    <li>Parámetros aditivos que agregan horas base independientes de la cantidad</li>
+                    <li>Factores de complejidad que ajustan el esfuerzo según características del proyecto</li>
+                  </ul>
+                  <p className="text-xs mt-2">
+                    <span className="font-medium">Esfuerzo total:</span> 
+                    <span className="ml-2">{formatNumber(requirement.esfuerzoEstimado)} horas</span>
                   </p>
                 </div>
               </div>
