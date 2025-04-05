@@ -548,16 +548,19 @@ export type Database = {
       }
       proyecto: {
         Row: {
+          esfuerzo_real: number | null
           fase_proyectoid: number | null
           nombreproyecto: string | null
           proyectoid: number
         }
         Insert: {
+          esfuerzo_real?: number | null
           fase_proyectoid?: number | null
           nombreproyecto?: string | null
           proyectoid?: number
         }
         Update: {
+          esfuerzo_real?: number | null
           fase_proyectoid?: number | null
           nombreproyecto?: string | null
           proyectoid?: number

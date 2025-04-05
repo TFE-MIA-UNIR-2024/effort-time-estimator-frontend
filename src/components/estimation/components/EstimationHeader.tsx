@@ -36,7 +36,7 @@ const EstimationHeader = ({
             disabled={refreshing || loading}
           >
             {refreshing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-            Actualizar
+            Esfuerzo Real
           </Button>
         </div>
       </SheetHeader>
