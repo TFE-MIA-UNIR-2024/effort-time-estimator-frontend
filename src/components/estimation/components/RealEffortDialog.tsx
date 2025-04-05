@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, InfoIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ChartContainer } from "@/components/ui/chart";
@@ -214,6 +214,20 @@ export const RealEffortDialog = ({
                       <span className={`text-sm ${deviation < 0 ? 'text-green-600' : deviation > 0 ? 'text-red-600' : 'text-gray-600'}`}>
                         {deviation < 0 ? '-' : deviation > 0 ? '+' : ''}{formatNumber(Math.abs(deviationInHrs))} hrs
                       </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-muted p-4 rounded-lg mt-2">
+                    <div className="flex items-start gap-2">
+                      <InfoIcon className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-medium mb-1">Cálculo de la desviación:</p>
+                        <ul className="space-y-1 list-disc pl-5">
+                          <li><span className="font-medium">Desviación (jornada):</span> Esfuerzo Real - Esfuerzo Estimado = {formatNumber(realEffortNum)} - {formatNumber(estimatedHours)} = {formatNumber(deviation)}</li>
+                          <li><span className="font-medium">Desviación (%):</span> (Esfuerzo Real - Esfuerzo Estimado) / Esfuerzo Estimado × 100% = {formatNumber(deviationPercentage)}%</li>
+                          <li><span className="font-medium">Desviación (horas):</span> Desviación en jornada × 8 = {formatNumber(deviation)} × 8 = {formatNumber(deviationInHrs)}</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
 
