@@ -1,5 +1,12 @@
 
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface PuntoFuncion {
   cantidad_estimada: number | null;
@@ -7,6 +14,7 @@ interface PuntoFuncion {
   tipo_elemento_afectado: {
     nombre: string;
   } | null;
+  factor_multiplicativo?: number;
 }
 
 interface RequirementItemProps {
@@ -16,6 +24,12 @@ interface RequirementItemProps {
     pf: number;
     esfuerzoEstimado: number;
     puntosFuncion: PuntoFuncion[];
+    factores?: {
+      [key: number]: {
+        factor_ia: number;
+        nombre: string;
+      }
+    };
   };
   expanded: boolean;
   onToggle: () => void;
@@ -25,6 +39,11 @@ interface RequirementItemProps {
 const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: RequirementItemProps) => {
   // Calculate effort per function point for this requirement (if there are PF)
   const effortPerFP = requirement.pf > 0 ? (requirement.esfuerzoEstimado / requirement.pf) : 0;
+
+  // Filter function points with values > 0
+  const activePuntosFuncion = requirement.puntosFuncion.filter(pf => 
+    pf.cantidad_estimada && pf.cantidad_estimada > 0
+  );
 
   return (
     <div className="border-t pt-2 mt-2">
@@ -55,21 +74,86 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
       </div>
       
       {expanded && (
-        <div className="pl-4 py-2 space-y-1 bg-gray-50 rounded-md mb-2">
-          <p className="text-sm font-medium mb-2">Elementos afectados:</p>
-          {requirement.puntosFuncion.filter(pf => pf.cantidad_estimada && pf.cantidad_estimada > 0).length > 0 ? (
-            <div className="grid grid-cols-2 gap-x-8 gap-y-1 px-2">
-              {requirement.puntosFuncion
-                .filter(pf => pf.cantidad_estimada && pf.cantidad_estimada > 0)
-                .map((pf, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span>{pf.tipo_elemento_afectado?.nombre}:</span>
-                    <span className="font-medium ml-2">{pf.cantidad_estimada}</span>
+        <div className="pl-4 py-2 space-y-3 bg-gray-50 rounded-md mb-2">
+          <div className="flex justify-between items-start px-2">
+            <p className="text-sm font-medium">Elementos afectados:</p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="cursor-help">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
                   </div>
-                ))}
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[300px]">
+                  <p className="text-xs">
+                    El esfuerzo se calcula multiplicando la cantidad de cada elemento por su factor correspondiente
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          {activePuntosFuncion.length > 0 ? (
+            <div className="px-2">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="py-1 px-2 text-xs">Elemento</TableHead>
+                    <TableHead className="py-1 px-2 text-xs">Cantidad</TableHead>
+                    <TableHead className="py-1 px-2 text-xs">
+                      <div className="flex items-center gap-1">
+                        Factor
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="cursor-help">
+                                <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">Factor de complejidad asociado a este elemento</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </TableHead>
+                    <TableHead className="py-1 px-2 text-xs text-right">Esfuerzo</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activePuntosFuncion.map((pf, idx) => {
+                    const elementId = pf.tipo_elemento_afectado_id;
+                    const factor = requirement.factores && elementId ? 
+                      requirement.factores[elementId]?.factor_ia || 1 : 1;
+                    const calculatedEffort = (pf.cantidad_estimada || 0) * factor;
+                    
+                    return (
+                      <TableRow key={idx} className="hover:bg-white">
+                        <TableCell className="py-1 px-2 text-xs">{pf.tipo_elemento_afectado?.nombre}</TableCell>
+                        <TableCell className="py-1 px-2 text-xs">{pf.cantidad_estimada}</TableCell>
+                        <TableCell className="py-1 px-2 text-xs">{formatNumber(factor)}</TableCell>
+                        <TableCell className="py-1 px-2 text-xs text-right font-medium">
+                          {formatNumber(calculatedEffort)} hrs
+                          <div className="text-[10px] text-muted-foreground">
+                            {pf.cantidad_estimada} × {formatNumber(factor)}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  <TableRow>
+                    <TableCell colSpan={3} className="py-1 px-2 text-xs text-right font-medium">
+                      Total:
+                    </TableCell>
+                    <TableCell className="py-1 px-2 text-xs text-right font-medium">
+                      {formatNumber(requirement.esfuerzoEstimado)} hrs
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </div>
           ) : (
-            <p className="text-sm text-gray-500 italic">No hay elementos afectados con cantidad mayor a cero</p>
+            <p className="text-sm text-gray-500 italic px-2">No hay elementos afectados con cantidad mayor a cero</p>
           )}
         </div>
       )}

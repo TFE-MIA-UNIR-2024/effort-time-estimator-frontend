@@ -76,11 +76,53 @@ export const fetchRequirementsForNeed = async (needId: number): Promise<any[] | 
   return data;
 };
 
+// Fetch element factors from database
+export const fetchElementFactors = async (
+  elementIds: number[],
+  complejidadParamId?: number
+): Promise<Record<number, {factor_ia: number, nombre: string}>> => {
+  if (!elementIds.length || !complejidadParamId) {
+    return {};
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from("elemento_afectado")
+      .select("tipo_elemento_afectadoid, factor, factor_ia, nombre")
+      .eq("parametro_estimacionid", complejidadParamId)
+      .in("tipo_elemento_afectadoid", elementIds);
+    
+    if (error) {
+      console.error("Error fetching element factors:", error);
+      return {};
+    }
+    
+    // Create a map of element ID to factor
+    const factorsMap: Record<number, {factor_ia: number, nombre: string}> = {};
+    
+    if (data) {
+      data.forEach(elem => {
+        const factorValue = elem.factor_ia || elem.factor || 1;
+        factorsMap[elem.tipo_elemento_afectadoid] = {
+          factor_ia: factorValue,
+          nombre: elem.nombre
+        };
+      });
+    }
+    
+    return factorsMap;
+  } catch (error) {
+    console.error("Error in fetchElementFactors:", error);
+    return {};
+  }
+};
+
 // Calculate estimation factors for a specific punto_funcion (simplified - only multiplicative)
 export const calculateEstimationFactors = async (
   pf: PuntoFuncion,
   parametros: ParametroEstimacion[],
-  complejidadParam: ParametroEstimacion | undefined
+  complejidadParam: ParametroEstimacion | undefined,
+  factorsMap: Record<number, {factor_ia: number, nombre: string}>
 ): Promise<number> => {
   if (!pf.tipo_elemento_afectado_id || !pf.cantidad_estimada) {
     return 0;
@@ -88,7 +130,12 @@ export const calculateEstimationFactors = async (
   
   let factorComplejidad = 1;
 
-  if (complejidadParam) {
+  // Use pre-fetched factors if available
+  if (pf.tipo_elemento_afectado_id && factorsMap[pf.tipo_elemento_afectado_id]) {
+    factorComplejidad = factorsMap[pf.tipo_elemento_afectado_id].factor_ia;
+  }
+  // Fallback to fetching from database
+  else if (complejidadParam) {
     const { data: elementoAfectado } = await supabase
       .from("elemento_afectado")
       .select("factor, factor_ia")
@@ -137,6 +184,22 @@ export const processRequirements = async (
   const complejidadParam = parametros?.find(
     (p) => p.tipo_parametro_estimacion?.nombre === "Complejidad"
   );
+  
+  // Get all unique element IDs for batch fetching factors
+  const allElementIds: number[] = [];
+  requirements.forEach(req => {
+    (req.punto_funcion || []).forEach((pf: any) => {
+      if (pf.tipo_elemento_afectado_id && !allElementIds.includes(pf.tipo_elemento_afectado_id)) {
+        allElementIds.push(pf.tipo_elemento_afectado_id);
+      }
+    });
+  });
+  
+  // Pre-fetch all element factors in one go
+  const allFactors = await fetchElementFactors(
+    allElementIds, 
+    complejidadParam?.parametro_estimacionid
+  );
 
   return Promise.all(
     requirements.map(async (req) => {
@@ -156,12 +219,14 @@ export const processRequirements = async (
           pf: 0,
           esfuerzoEstimado: 0,
           puntosFuncion: [],
+          factores: {}
         };
       }
 
+      // Calculate effort for each function point using pre-fetched factors
       const esfuerzoMultiplicativo = await Promise.all(
         puntosFuncion.map(async (pf) => 
-          calculateEstimationFactors(pf, parametros, complejidadParam)
+          calculateEstimationFactors(pf, parametros, complejidadParam, allFactors)
         )
       );
 
@@ -176,6 +241,7 @@ export const processRequirements = async (
         pf,
         esfuerzoEstimado: totalEsfuerzo,
         puntosFuncion,
+        factores: allFactors
       };
     })
   );

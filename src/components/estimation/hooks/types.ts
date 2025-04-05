@@ -2,12 +2,12 @@
 export interface ParametroEstimacion {
   parametro_estimacionid: number;
   nombre: string;
-  factor: number | null;
-  factor_ia: number | null;
+  factor?: number;
+  factor_ia?: number;
   tipo_parametro_estimacion: {
     nombre: string;
     haselementosafectados: boolean;
-  } | null;
+  };
 }
 
 export interface PuntoFuncion {
@@ -16,6 +16,7 @@ export interface PuntoFuncion {
   tipo_elemento_afectado: {
     nombre: string;
   } | null;
+  factor_multiplicativo?: number;
 }
 
 export interface Need {
@@ -29,6 +30,12 @@ export interface Requirement {
   pf: number;
   esfuerzoEstimado: number;
   puntosFuncion: PuntoFuncion[];
+  factores?: {
+    [key: number]: {
+      factor_ia: number;
+      nombre: string;
+    }
+  };
 }
 
 export interface NeedEstimation extends Need {
