@@ -44,12 +44,23 @@ export const RealEffortDialog = ({
     ? ((realEffortNum - estimatedHours) / estimatedHours) * 100
     : 0;
 
+  // Convert workdays to hours (8 hours per workday)
+  const workdayToHours = (workdays: number) => workdays * 8;
+  const estimatedHoursInHrs = workdayToHours(estimatedHours);
+  const realEffortInHrs = workdayToHours(realEffortNum);
+  const deviationInHrs = workdayToHours(deviation);
+
   // Prepare chart data
   const chartData = [
     {
-      name: "Horas",
+      name: "Jornada",
       Estimado: estimatedHours,
       Real: realEffortNum > 0 ? realEffortNum : 0,
+    },
+    {
+      name: "Horas",
+      Estimado: estimatedHoursInHrs,
+      Real: realEffortNum > 0 ? realEffortInHrs : 0,
     }
   ];
 
@@ -153,44 +164,61 @@ export const RealEffortDialog = ({
                 <Label htmlFor="estimatedHours" className="text-right">
                   Estimado:
                 </Label>
-                <Input
-                  id="estimatedHours"
-                  value={formatNumber(estimatedHours)}
-                  readOnly
-                  className="col-span-3 bg-muted"
-                />
+                <div className="col-span-3">
+                  <Input
+                    id="estimatedHours"
+                    value={formatNumber(estimatedHours)}
+                    readOnly
+                    className="mb-1 bg-muted"
+                  />
+                  <div className="text-sm text-muted-foreground">
+                    {formatNumber(estimatedHoursInHrs)} hrs
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="realEffort" className="text-right">
                   Real:
                 </Label>
-                <Input
-                  id="realEffort"
-                  value={realEffort}
-                  onChange={(e) => setRealEffort(e.target.value)}
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <Input
+                    id="realEffort"
+                    value={realEffort}
+                    onChange={(e) => setRealEffort(e.target.value)}
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    className="mb-1"
+                  />
+                  {realEffortNum > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      {formatNumber(realEffortInHrs)} hrs
+                    </div>
+                  )}
+                </div>
               </div>
 
               {realEffortNum > 0 && (
                 <>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Desviación:</Label>
-                    <div className="col-span-3 flex items-center gap-2">
-                      <span className={`font-medium ${deviation < 0 ? 'text-green-600' : deviation > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                        {deviation < 0 ? '-' : deviation > 0 ? '+' : ''}{formatNumber(Math.abs(deviation))} hrs
-                      </span>
+                    <div className="col-span-3 flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-medium ${deviation < 0 ? 'text-green-600' : deviation > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                          {deviation < 0 ? '-' : deviation > 0 ? '+' : ''}{formatNumber(Math.abs(deviation))} jornada
+                        </span>
+                        <span className={`text-sm ${deviation < 0 ? 'text-green-600' : deviation > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                          ({deviationPercentage < 0 ? '-' : deviationPercentage > 0 ? '+' : ''}{formatNumber(Math.abs(deviationPercentage))}%)
+                        </span>
+                      </div>
                       <span className={`text-sm ${deviation < 0 ? 'text-green-600' : deviation > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                        ({deviationPercentage < 0 ? '-' : deviationPercentage > 0 ? '+' : ''}{formatNumber(Math.abs(deviationPercentage))}%)
+                        {deviation < 0 ? '-' : deviation > 0 ? '+' : ''}{formatNumber(Math.abs(deviationInHrs))} hrs
                       </span>
                     </div>
                   </div>
 
                   <div className="mt-4">
-                    <ChartContainer className="h-[200px]" config={{
+                    <ChartContainer className="h-[250px]" config={{
                       Estimado: { color: "#4f46e5" },
                       Real: { color: "#ef4444" }
                     }}>
@@ -200,8 +228,8 @@ export const RealEffortDialog = ({
                         <YAxis />
                         <Tooltip formatter={(value) => formatNumber(Number(value))} />
                         <Legend />
-                        <Bar dataKey="Estimado" name="Estimado (hrs)" fill="#4f46e5" />
-                        <Bar dataKey="Real" name="Real (hrs)" fill="#ef4444" />
+                        <Bar dataKey="Estimado" name="Estimado" fill="#4f46e5" />
+                        <Bar dataKey="Real" name="Real" fill="#ef4444" />
                       </BarChart>
                     </ChartContainer>
                   </div>

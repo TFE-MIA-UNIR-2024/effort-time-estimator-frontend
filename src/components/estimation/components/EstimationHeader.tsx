@@ -23,12 +23,20 @@ const EstimationHeader = ({
   projectId
 }: EstimationHeaderProps) => {
   const [realEffortDialogOpen, setRealEffortDialogOpen] = useState(false);
+  
+  // Convert workdays to hours (8 hours per workday)
+  const totalHoursInHrs = totalProjectHours * 8;
 
   return (
     <>
       <SheetHeader className="mb-4">
         <div className="flex items-center justify-between">
-          <SheetTitle>Estimaciones del Proyecto</SheetTitle>
+          <div>
+            <SheetTitle>Estimaciones del Proyecto</SheetTitle>
+            <p className="text-sm text-muted-foreground">
+              Total: {formatNumber(totalProjectHours)} jornada ({formatNumber(totalHoursInHrs)} hrs)
+            </p>
+          </div>
           <Button 
             size="sm" 
             variant="outline"
