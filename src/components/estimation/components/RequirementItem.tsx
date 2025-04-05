@@ -45,6 +45,18 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
     pf.cantidad_estimada && pf.cantidad_estimada > 0
   );
 
+  // Calculate the accurate total for the displayed table
+  const calculateTableTotal = () => {
+    return activePuntosFuncion.reduce((total, pf) => {
+      const elementId = pf.tipo_elemento_afectado_id;
+      const factor = requirement.factores && elementId ? 
+        requirement.factores[elementId]?.factor_ia || 1 : 1;
+      return total + ((pf.cantidad_estimada || 0) * factor);
+    }, 0);
+  };
+
+  const tableTotal = calculateTableTotal();
+
   return (
     <div className="border-t pt-2 mt-2">
       <div 
@@ -146,7 +158,7 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
                       Total:
                     </TableCell>
                     <TableCell className="py-1 px-2 text-xs text-right font-medium">
-                      {formatNumber(requirement.esfuerzoEstimado)} jornada
+                      {formatNumber(tableTotal)} jornada
                     </TableCell>
                   </TableRow>
                 </TableBody>
