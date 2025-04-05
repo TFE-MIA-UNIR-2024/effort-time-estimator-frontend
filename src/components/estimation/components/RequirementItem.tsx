@@ -56,6 +56,9 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
   };
 
   const tableTotal = calculateTableTotal();
+  
+  // Convert workdays to hours (8 hours per workday)
+  const workdayToHours = (workdays: number) => workdays * 8;
 
   return (
     <div className="border-t pt-2 mt-2">
@@ -130,6 +133,7 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
                       </div>
                     </TableHead>
                     <TableHead className="py-1 px-2 text-xs text-right">Esfuerzo</TableHead>
+                    <TableHead className="py-1 px-2 text-xs text-right">Horas (x8)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -138,6 +142,7 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
                     const factor = requirement.factores && elementId ? 
                       requirement.factores[elementId]?.factor_ia || 1 : 1;
                     const calculatedEffort = (pf.cantidad_estimada || 0) * factor;
+                    const calculatedHours = workdayToHours(calculatedEffort);
                     
                     return (
                       <TableRow key={idx} className="hover:bg-white">
@@ -150,6 +155,9 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
                             {pf.cantidad_estimada} × {formatNumber(factor)}
                           </div>
                         </TableCell>
+                        <TableCell className="py-1 px-2 text-xs text-right font-medium">
+                          {formatNumber(calculatedHours)} hrs
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -159,6 +167,9 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
                     </TableCell>
                     <TableCell className="py-1 px-2 text-xs text-right font-medium">
                       {formatNumber(tableTotal)} jornada
+                    </TableCell>
+                    <TableCell className="py-1 px-2 text-xs text-right font-medium">
+                      {formatNumber(workdayToHours(tableTotal))} hrs
                     </TableCell>
                   </TableRow>
                 </TableBody>
