@@ -17,6 +17,12 @@ interface Requirement {
   pf: number;
   esfuerzoEstimado: number;
   puntosFuncion: PuntoFuncion[];
+  factores?: {
+    [key: number]: {
+      factor_ia: number;
+      nombre: string;
+    }
+  };
 }
 
 interface NeedEstimationItemProps {
@@ -78,10 +84,10 @@ const NeedEstimationItem = ({ need, expanded, onToggle, formatNumber }: NeedEsti
             <p className="text-sm">Puntos de función: {formatNumber(need.totalPF)}</p>
           </div>
           <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">Esfuerzo: {formatNumber(need.totalEsfuerzo)} hrs</p>
+            <p className="text-sm font-medium">Esfuerzo: {formatNumber(need.totalEsfuerzo)} jornada</p>
             {hasAnyFunctionPoints && (
               <p className="text-xs text-muted-foreground">
-                ({formatNumber(effortPerFP)} hrs/PF)
+                ({formatNumber(effortPerFP)} jornada/PF)
               </p>
             )}
             {expanded ? 

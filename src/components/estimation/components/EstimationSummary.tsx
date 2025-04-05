@@ -10,7 +10,7 @@ const EstimationSummary = ({ totalProjectHours, needsCount, formatNumber }: Esti
     <div className="mb-6 p-4 bg-muted/50 rounded-lg">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-sm text-muted-foreground">Esfuerzo Total (hrs)</p>
+          <p className="text-sm text-muted-foreground">Esfuerzo Total (jornada)</p>
           <p className="text-2xl font-semibold">{formatNumber(totalProjectHours)}</p>
         </div>
         <div>

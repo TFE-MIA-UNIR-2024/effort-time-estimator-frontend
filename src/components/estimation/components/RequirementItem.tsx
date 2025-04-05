@@ -58,10 +58,10 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
           <div className="flex flex-col items-end">
             <p className="text-sm">PF: {formatNumber(requirement.pf)}</p>
             <div className="flex items-center">
-              <p className="text-sm font-medium">Esfuerzo: {formatNumber(requirement.esfuerzoEstimado)} hrs</p>
+              <p className="text-sm font-medium">Esfuerzo: {formatNumber(requirement.esfuerzoEstimado)} jornada</p>
               {requirement.pf > 0 && (
                 <p className="text-xs text-muted-foreground ml-1">
-                  ({formatNumber(effortPerFP)} hrs/PF)
+                  ({formatNumber(effortPerFP)} jornada/PF)
                 </p>
               )}
             </div>
@@ -133,7 +133,7 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
                         <TableCell className="py-1 px-2 text-xs">{pf.cantidad_estimada}</TableCell>
                         <TableCell className="py-1 px-2 text-xs">{formatNumber(factor)}</TableCell>
                         <TableCell className="py-1 px-2 text-xs text-right font-medium">
-                          {formatNumber(calculatedEffort)} hrs
+                          {formatNumber(calculatedEffort)} jornada
                           <div className="text-[10px] text-muted-foreground">
                             {pf.cantidad_estimada} × {formatNumber(factor)}
                           </div>
@@ -146,7 +146,7 @@ const RequirementItem = ({ requirement, expanded, onToggle, formatNumber }: Requ
                       Total:
                     </TableCell>
                     <TableCell className="py-1 px-2 text-xs text-right font-medium">
-                      {formatNumber(requirement.esfuerzoEstimado)} hrs
+                      {formatNumber(requirement.esfuerzoEstimado)} jornada
                     </TableCell>
                   </TableRow>
                 </TableBody>
