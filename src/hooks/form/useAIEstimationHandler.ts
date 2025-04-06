@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Element } from "./types";
 import { useAIEstimation } from "./useAIEstimation";
+import { useFormParameters } from "./useFormParameters";
 
 export function useAIEstimationHandler(
   elementos: Element[],
@@ -14,6 +14,7 @@ export function useAIEstimationHandler(
   const [aiLoading, setAILoading] = useState(false);
   const { toast } = useToast();
   const { generateWeights } = useAIEstimation();
+  const { getParameterIdByNameAndType } = useFormParameters();
 
   const handleGenerateAIEstimation = async (selectedIds?: number[]) => {
     if (!requirement) {
@@ -129,15 +130,9 @@ export function useAIEstimationHandler(
   // Helper function to find parameter estimation ID from its type and value
   const getParameterIdFromTypeAndValue = (typeId: number, paramValue: string): number | null => {
     // This would typically involve looking up the parameter ID from some service
-    // For now, we'll just log that we're looking for it
     console.log(`Looking up parameter ID for type ${typeId} and value "${paramValue}"`);
     
-    // If the form already has the parametro_estimacionid for this type and value,
-    // we would return it here. Let's implement a simple lookup:
-    
-    // Assuming we have a fetch service that can be called synchronously to get the parameter ID
-    // In a real application, you would probably use a context or store this mapping in state
-    const { getParameterIdByNameAndType } = require('./useFormParameters');
+    // Use the properly imported function instead of require
     const paramId = getParameterIdByNameAndType(paramValue, typeId);
     
     console.log(`Found parameter ID ${paramId} for type ${typeId} and value "${paramValue}"`);
