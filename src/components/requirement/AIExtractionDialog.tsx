@@ -25,17 +25,22 @@ const AIExtractionDialog = ({
   const { extractRequirements, isExtracting, progress } = useRequirementsExtraction();
 
   const handleExtract = async () => {
-    const result = await extractRequirements(needId, needBody);
-    if (result) {
-      setCompleted(true);
-      setTimeout(() => {
-        onOpenChange(false);
-        onSuccess();
-        // Reset the state after closing
+    try {
+      const result = await extractRequirements(needId, needBody);
+      if (result) {
+        setCompleted(true);
         setTimeout(() => {
-          setCompleted(false);
-        }, 300);
-      }, 1500);
+          onOpenChange(false);
+          onSuccess();
+          // Reset the state after closing
+          setTimeout(() => {
+            setCompleted(false);
+          }, 300);
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("Error in extraction process:", error);
+      // Error is already handled in the hook with toast notifications
     }
   };
 

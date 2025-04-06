@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { extractTitlesFromDocument, generateDescriptionForTitle } from "./openAiService";
-import { RequirementItem, formatRequirementsForDatabase } from "./requirementFormatter";
+import { extractTitlesFromDocument } from "./api/titlesExtractor";
+import { generateDescriptionForTitle } from "./api/descriptionGenerator";
+import { RequirementItem, formatRequirementsForDatabase } from "./api/requirementsFormatter";
 
 export const useRequirementsExtraction = () => {
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
@@ -18,12 +19,6 @@ export const useRequirementsExtraction = () => {
     try {
       setIsExtracting(true);
       onProgress(0);
-      
-      // Check if API key is defined
-      const apiKey = "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";
-      if (!apiKey) {
-        throw new Error("API key not found. Please set the VITE_OPENAI_API_KEY environment variable.");
-      }
       
       console.log("Starting requirement extraction process...");
       
@@ -82,7 +77,7 @@ export const useRequirementsExtraction = () => {
       } else {
         toast({
           title: "Error",
-          description: "Ha ocurrido un error al extraer los requerimientos",
+          description: "Ha ocurrido un error al extraer los requerimientos: " + errorMessage,
           variant: "destructive",
         });
       }
