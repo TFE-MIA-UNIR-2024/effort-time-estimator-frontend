@@ -123,86 +123,11 @@ export const RealEffortDialog = ({
         throw projectUpdateError;
       }
 
-      // 2. First get all necesidades for this project
-      const { data: needs, error: needsError } = await supabase
-        .from('necesidad')
-        .select('necesidadid')
-        .eq('proyectoid', projectId);
-
-      if (needsError) {
-        console.error('Error fetching needs:', needsError);
-        throw needsError;
-      }
-
-      if (!needs || needs.length === 0) {
-        console.log("No needs found for this project");
-        toast({
-          title: "Éxito",
-          description: "Esfuerzo real guardado correctamente, pero no hay necesidades asociadas para actualizar puntos de función.",
-        });
-        onOpenChange(false);
-        return;
-      }
-
-      const needIds = needs.map(need => need.necesidadid);
-
-      // 3. Get all requirements for these needs
-      const { data: requirements, error: requirementsError } = await supabase
-        .from('requerimiento')
-        .select('requerimientoid')
-        .in('necesidadid', needIds);
-
-      if (requirementsError) {
-        console.error('Error fetching requirements:', requirementsError);
-        throw requirementsError;
-      }
-
-      if (!requirements || requirements.length === 0) {
-        console.log("No requirements found for these needs");
-        toast({
-          title: "Éxito",
-          description: "Esfuerzo real guardado correctamente, pero no hay requerimientos asociados para actualizar puntos de función.",
-        });
-        onOpenChange(false);
-        return;
-      }
-
-      const reqIds = requirements.map(req => req.requerimientoid);
-
-      // 4. Get all function points for these requirements
-      const { data: functionPoints, error: functionPointsError } = await supabase
-        .from('punto_funcion')
-        .select('punto_funcionid')
-        .in('requerimientoid', reqIds);
-
-      if (functionPointsError) {
-        console.error('Error fetching function points:', functionPointsError);
-        throw functionPointsError;
-      }
-
-      if (functionPoints && functionPoints.length > 0) {
-        // Create updates array for all function points
-        const updates = functionPoints.map(fp => ({
-          punto_funcionid: fp.punto_funcionid,
-          jornada_estimada: parsedEffort // Set the real effort as the estimated workday
-        }));
-
-        console.log("Updating function points with estimated workday:", updates);
-
-        // Update all function points in a transaction
-        const { error: updateError } = await supabase.rpc('update_estimated_workdays', {
-          updates: updates
-        });
-
-        if (updateError) {
-          console.error('Error updating function points:', updateError);
-          throw updateError;
-        }
-      }
-
+      // We don't need to update jornada_estimada in punto_funcion
+      // since those values are already calculated correctly
       toast({
         title: "Éxito",
-        description: "Esfuerzo real guardado correctamente y jornadas estimadas actualizadas",
+        description: "Esfuerzo real guardado correctamente",
       });
       onOpenChange(false);
     } catch (error: any) {
