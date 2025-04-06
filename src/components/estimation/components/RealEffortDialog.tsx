@@ -123,22 +123,57 @@ export const RealEffortDialog = ({
         throw projectUpdateError;
       }
 
-      // 2. Get all function points for this project to update their estimated workday
-      // FIXED: Using proper parameter syntax for the query
+      // 2. First get all necesidades for this project
+      const { data: needs, error: needsError } = await supabase
+        .from('necesidad')
+        .select('necesidadid')
+        .eq('proyectoid', projectId);
+
+      if (needsError) {
+        console.error('Error fetching needs:', needsError);
+        throw needsError;
+      }
+
+      if (!needs || needs.length === 0) {
+        console.log("No needs found for this project");
+        toast({
+          title: "Éxito",
+          description: "Esfuerzo real guardado correctamente, pero no hay necesidades asociadas para actualizar puntos de función.",
+        });
+        onOpenChange(false);
+        return;
+      }
+
+      const needIds = needs.map(need => need.necesidadid);
+
+      // 3. Get all requirements for these needs
+      const { data: requirements, error: requirementsError } = await supabase
+        .from('requerimiento')
+        .select('requerimientoid')
+        .in('necesidadid', needIds);
+
+      if (requirementsError) {
+        console.error('Error fetching requirements:', requirementsError);
+        throw requirementsError;
+      }
+
+      if (!requirements || requirements.length === 0) {
+        console.log("No requirements found for these needs");
+        toast({
+          title: "Éxito",
+          description: "Esfuerzo real guardado correctamente, pero no hay requerimientos asociados para actualizar puntos de función.",
+        });
+        onOpenChange(false);
+        return;
+      }
+
+      const reqIds = requirements.map(req => req.requerimientoid);
+
+      // 4. Get all function points for these requirements
       const { data: functionPoints, error: functionPointsError } = await supabase
         .from('punto_funcion')
-        .select('punto_funcionid, requerimientoid')
-        .in('requerimientoid', 
-          supabase
-            .from('requerimiento')
-            .select('requerimientoid')
-            .in('necesidadid', 
-              supabase
-                .from('necesidad')
-                .select('necesidadid')
-                .eq('proyectoid', projectId)
-            )
-        );
+        .select('punto_funcionid')
+        .in('requerimientoid', reqIds);
 
       if (functionPointsError) {
         console.error('Error fetching function points:', functionPointsError);
