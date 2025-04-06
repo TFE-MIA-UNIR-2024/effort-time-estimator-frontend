@@ -124,10 +124,21 @@ export const RealEffortDialog = ({
       }
 
       // 2. Get all function points for this project to update their estimated workday
+      // FIXED: Using proper parameter syntax for the query
       const { data: functionPoints, error: functionPointsError } = await supabase
         .from('punto_funcion')
         .select('punto_funcionid, requerimientoid')
-        .or(`requerimientoid.in.(select requerimientoid from requerimiento where necesidadid in (select necesidadid from necesidad where proyectoid=${projectId}))`);
+        .in('requerimientoid', 
+          supabase
+            .from('requerimiento')
+            .select('requerimientoid')
+            .in('necesidadid', 
+              supabase
+                .from('necesidad')
+                .select('necesidadid')
+                .eq('proyectoid', projectId)
+            )
+        );
 
       if (functionPointsError) {
         console.error('Error fetching function points:', functionPointsError);
@@ -144,7 +155,6 @@ export const RealEffortDialog = ({
         console.log("Updating function points with estimated workday:", updates);
 
         // Update all function points in a transaction
-        // FIXED: Use the correct function name 'update_estimated_workdays'
         const { error: updateError } = await supabase.rpc('update_estimated_workdays', {
           updates: updates
         });
