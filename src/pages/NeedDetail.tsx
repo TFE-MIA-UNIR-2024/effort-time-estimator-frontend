@@ -9,6 +9,7 @@ import NeedHeader from "@/components/need/NeedHeader";
 import NeedContent from "@/components/need/NeedContent";
 import RequirementsList from "@/components/requirement/RequirementsList";
 import { useNeedDetail } from "@/hooks/useNeedDetail";
+import AIExtractionDialog from "@/components/requirement/AIExtractionDialog";
 import RequirementFormDialog from "@/components/requirement/RequirementFormDialog";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,6 +20,7 @@ const NeedDetail = () => {
   const { need, requirements, loading, refetchRequirements } = useNeedDetail(id);
   const [editFormOpen, setEditFormOpen] = useState(false);
   const [realQuantityOpen, setRealQuantityOpen] = useState(false);
+  const [aiExtractionOpen, setAiExtractionOpen] = useState(false);
   const [selectedRequirementId, setSelectedRequirementId] = useState<number | null>(null);
   const [requirementFormOpen, setRequirementFormOpen] = useState(false);
   const [selectedRequirement, setSelectedRequirement] = useState<any>(null);
@@ -26,6 +28,18 @@ const NeedDetail = () => {
   const handleAddRequirement = () => {
     setSelectedRequirement(null);
     setRequirementFormOpen(true);
+  };
+
+  const handleExtractRequirements = () => {
+    if (!need || !need.cuerpo) {
+      toast({
+        title: "Error",
+        description: "La necesidad no tiene contenido para extraer requerimientos",
+        variant: "destructive",
+      });
+      return;
+    }
+    setAiExtractionOpen(true);
   };
 
   const handleGoBack = () => {
@@ -100,6 +114,8 @@ const NeedDetail = () => {
     );
   }
 
+  const showExtractButton = requirements.length === 0 && need.cuerpo;
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <NavBar />
@@ -109,6 +125,8 @@ const NeedDetail = () => {
           code={need.codigonecesidad}
           onGoBack={handleGoBack}
           onAddRequirement={handleAddRequirement}
+          onExtractRequirements={showExtractButton ? handleExtractRequirements : undefined}
+          requirementsCount={requirements.length}
         />
         
         {need.cuerpo && (
@@ -145,6 +163,16 @@ const NeedDetail = () => {
         onSuccess={refetchRequirements}
         requirement={selectedRequirement}
       />
+
+      {need && (
+        <AIExtractionDialog
+          open={aiExtractionOpen}
+          onOpenChange={setAiExtractionOpen}
+          needId={need.necesidadid.toString()}
+          needBody={need.cuerpo || ""}
+          onSuccess={refetchRequirements}
+        />
+      )}
     </div>
   );
 };
