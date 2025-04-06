@@ -112,30 +112,58 @@ export const RealEffortDialog = ({
     try {
       const parsedEffort = parseFloat(realEffort);
       
-      const { error } = await supabase
+      // 1. Update project with real effort
+      const { error: projectUpdateError } = await supabase
         .from('proyecto')
         .update({ esfuerzo_real: parsedEffort })
         .eq('proyectoid', projectId);
 
-      if (error) {
-        console.error('Error saving real effort:', error);
-        toast({
-          title: "Error",
-          description: "No se pudo guardar el esfuerzo real",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Éxito",
-          description: "Esfuerzo real guardado correctamente",
-        });
-        onOpenChange(false);
+      if (projectUpdateError) {
+        console.error('Error saving real effort:', projectUpdateError);
+        throw projectUpdateError;
       }
-    } catch (error) {
+
+      // 2. Get all function points for this project to update their estimated workday
+      const { data: functionPoints, error: functionPointsError } = await supabase
+        .from('punto_funcion')
+        .select('punto_funcionid, requerimientoid')
+        .or(`requerimientoid.in.(select requerimientoid from requerimiento where necesidadid in (select necesidadid from necesidad where proyectoid=${projectId}))`);
+
+      if (functionPointsError) {
+        console.error('Error fetching function points:', functionPointsError);
+        throw functionPointsError;
+      }
+
+      if (functionPoints && functionPoints.length > 0) {
+        // Create updates array for all function points
+        const updates = functionPoints.map(fp => ({
+          punto_funcionid: fp.punto_funcionid,
+          jornada_estimada: parsedEffort // Set the real effort as the estimated workday
+        }));
+
+        console.log("Updating function points with estimated workday:", updates);
+
+        // Update all function points in a transaction
+        const { error: updateError } = await supabase.rpc('update_estimated_workdays', {
+          updates: updates
+        });
+
+        if (updateError) {
+          console.error('Error updating function points:', updateError);
+          throw updateError;
+        }
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Esfuerzo real guardado correctamente y jornadas estimadas actualizadas",
+      });
+      onOpenChange(false);
+    } catch (error: any) {
       console.error('Error in save operation:', error);
       toast({
         title: "Error",
-        description: "Ocurrió un error al guardar el esfuerzo real",
+        description: `Ocurrió un error al guardar: ${error.message || error}`,
         variant: "destructive",
       });
     } finally {
@@ -145,7 +173,7 @@ export const RealEffortDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[650px]">
         <DialogHeader>
           <DialogTitle>Esfuerzo Real del Proyecto</DialogTitle>
           <DialogDescription>
