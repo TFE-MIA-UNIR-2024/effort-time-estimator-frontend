@@ -10,6 +10,8 @@ export const useWeightsGenerator = () => {
   ): Promise<Record<string, number>> => {
     try {
       console.log(`Generating weights for requirement: ${requirementTitle}`);
+      console.log("Selected element IDs:", selectedElementIds);
+      console.log("Parameter estimation IDs:", parameterEstimationIds);
       
       // Call prediction service
       const weights = await getPredictions(

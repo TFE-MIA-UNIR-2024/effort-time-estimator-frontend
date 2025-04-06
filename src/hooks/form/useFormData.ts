@@ -7,6 +7,7 @@ import { useParametersState } from "./useParametersState";
 import { useElementsState } from "./useElementsState";
 import { useAIEstimationHandler } from "./useAIEstimationHandler";
 import { Element } from "./types";
+import { useFormParameters } from "./useFormParameters";
 
 interface FormData {
   loading: boolean;
@@ -42,6 +43,7 @@ const elementosFields = [
 export function useFormData(requerimientoId: number, isOpen: boolean): FormData {
   const { toast } = useToast();
   const { handleSave: saveFormDataFn } = useSaveFormData();
+  const { getParameterIdByNameAndType } = useFormParameters();
   
   // Use the modular hooks
   const { 

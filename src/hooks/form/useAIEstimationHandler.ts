@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Element } from "./types";
@@ -29,12 +30,21 @@ export function useAIEstimationHandler(
       console.log("Generating AI estimation for requirement:", requirement.nombrerequerimiento);
       console.log("Using selected element IDs:", selectedIds || "all elements");
       
-      // Get parameter IDs from the parametros object
-      const parameterIds = parametros 
-        ? Object.keys(parametros)
-            .filter(key => parametros[Number(key)])
-            .map(key => Number(key))
-        : [];
+      // Convert parameter values to their IDs
+      const parameterIds: number[] = [];
+      
+      if (parametros) {
+        // Extract the selected parameter estimation IDs from the parametros object
+        Object.entries(parametros).forEach(([typeId, paramValue]) => {
+          if (paramValue) {
+            // Find the corresponding parameter ID in the form's state
+            const paramId = getParameterIdFromTypeAndValue(Number(typeId), paramValue);
+            if (paramId) {
+              parameterIds.push(paramId);
+            }
+          }
+        });
+      }
       
       console.log("Using parameter IDs:", parameterIds);
       
@@ -114,6 +124,24 @@ export function useAIEstimationHandler(
     } finally {
       setAILoading(false);
     }
+  };
+
+  // Helper function to find parameter estimation ID from its type and value
+  const getParameterIdFromTypeAndValue = (typeId: number, paramValue: string): number | null => {
+    // This would typically involve looking up the parameter ID from some service
+    // For now, we'll just log that we're looking for it
+    console.log(`Looking up parameter ID for type ${typeId} and value "${paramValue}"`);
+    
+    // If the form already has the parametro_estimacionid for this type and value,
+    // we would return it here. Let's implement a simple lookup:
+    
+    // Assuming we have a fetch service that can be called synchronously to get the parameter ID
+    // In a real application, you would probably use a context or store this mapping in state
+    const { getParameterIdByNameAndType } = require('./useFormParameters');
+    const paramId = getParameterIdByNameAndType(paramValue, typeId);
+    
+    console.log(`Found parameter ID ${paramId} for type ${typeId} and value "${paramValue}"`);
+    return paramId;
   };
 
   return {

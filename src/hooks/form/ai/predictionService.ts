@@ -30,7 +30,7 @@ export async function getPredictions(
     };
 
     console.log("Calling prediction endpoint with selected IDs:", selectedElementIds);
-    console.log("Parameter estimation IDs:", parameterEstimationIds);
+    console.log("Parameter estimation IDs being sent:", parameterEstimationIds);
     
     // Adding a timeout to the fetch request
     const controller = new AbortController();
