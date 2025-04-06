@@ -25,13 +25,17 @@ const RealQuantityDialog = ({ open, onOpenChange, requerimientoId }: RealQuantit
     }
   };
 
+  const handleElementValueChange = (elementId: number, value: string, field: 'cantidad_real' | 'jornada_real') => {
+    handleElementChange(elementId, value, field);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh]">
         <RealQuantityContent
           loading={loading}
           elements={elements}
-          onElementChange={handleElementChange}
+          onElementChange={handleElementValueChange}
           onClose={() => onOpenChange(false)}
           onSave={handleFormSave}
         />

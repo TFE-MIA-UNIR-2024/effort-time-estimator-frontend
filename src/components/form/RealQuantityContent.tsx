@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 interface RealQuantityContentProps {
   loading: boolean;
   elements: ElementWithQuantity[];
-  onElementChange: (elementId: number, value: string) => void;
+  onElementChange: (elementId: number, value: string, field: 'cantidad_real' | 'jornada_real') => void;
   onClose: () => void;
   onSave: () => void;
 }
@@ -43,7 +43,7 @@ const RealQuantityContent = ({
               className="border rounded-md p-4"
             >
               <div className="font-medium">{element.nombre}</div>
-              <div className="grid grid-cols-2 gap-4 mt-2">
+              <div className="grid grid-cols-3 gap-4 mt-2">
                 <div>
                   <div className="text-sm text-gray-500">Cantidad Estimada</div>
                   <div className="font-medium">{element.cantidad_estimada}</div>
@@ -54,8 +54,19 @@ const RealQuantityContent = ({
                     type="number"
                     min="0"
                     value={element.cantidad_real || ""}
-                    onChange={(e) => onElementChange(element.elemento_id, e.target.value)}
+                    onChange={(e) => onElementChange(element.elemento_id, e.target.value, 'cantidad_real')}
                     placeholder="Ingrese cantidad real"
+                  />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">Jornada Real</div>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.25"
+                    value={element.jornada_real || ""}
+                    onChange={(e) => onElementChange(element.elemento_id, e.target.value, 'jornada_real')}
+                    placeholder="Ingrese jornada real"
                   />
                 </div>
               </div>

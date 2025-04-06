@@ -8,6 +8,23 @@ const ALL_ELEMENT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 // Default selected IDs for prediction if none are provided
 const DEFAULT_PREDICTION_IDS = [2, 4, 7, 8, 12]; // Triggers/SP, Formularios, Reportes, Componentes, QA
 
+// Map element IDs to their labels
+const ID_TO_LABEL: Record<number, string> = {
+  1: "Tablas",
+  2: "Triggers/SP",
+  3: "Interfaces c/aplicativos",
+  4: "Formularios",
+  5: "Subrutinas complejas",
+  6: "Interfaces con BD",
+  7: "Reportes",
+  8: "Componentes",
+  9: "Javascript",
+  10: "Componentes Config. y Pruebas",
+  11: "Despliegue app movil",
+  12: "QA",
+  13: "PF",
+};
+
 export const generateWeights = async (
   title: string,
   body: string,
@@ -23,23 +40,6 @@ export const generateWeights = async (
     // Get predictions for selected element types
     const predictionMap = await getPredictions(predictionIds);
     console.log("Predictions received:", predictionMap);
-    
-    // Map element IDs to their labels
-    const idToLabel: Record<number, string> = {
-      1: "Tablas",
-      2: "Triggers/SP",
-      3: "Interfaces c/aplicativos",
-      4: "Formularios",
-      5: "Subrutinas complejas",
-      6: "Interfaces con BD",
-      7: "Reportes",
-      8: "Componentes",
-      9: "Javascript",
-      10: "Componentes Config. y Pruebas",
-      11: "Despliegue app movil",
-      12: "QA",
-      13: "PF",
-    };
     
     // Create a base weights object with all values set to 0
     const weights: WeightFormData = {
@@ -61,9 +61,9 @@ export const generateWeights = async (
     // Update weights with predicted values ONLY for the selected IDs
     Object.entries(predictionMap).forEach(([id, value]) => {
       const numericId = Number(id);
-      const label = idToLabel[numericId];
+      const label = ID_TO_LABEL[numericId];
       if (label && (predictionIds.includes(numericId) || !selectedIds)) {
-        weights[label] = value;
+        weights[label as keyof WeightFormData] = value;
       }
     });
     
@@ -99,10 +99,10 @@ export const generateWeights = async (
     if (selectedIds) {
       selectedIds.forEach(id => {
         const label = ALL_ELEMENT_IDS.includes(id) ? 
-          Object.entries(idToLabel).find(([key, val]) => Number(key) === id)?.[1] : null;
+          ID_TO_LABEL[id] : null;
         
         if (label) {
-          defaultWeights[label] = id === 13 ? 5 : DEFAULT_PREDICTION_IDS.includes(id) ? 
+          defaultWeights[label as keyof WeightFormData] = id === 13 ? 5 : DEFAULT_PREDICTION_IDS.includes(id) ? 
             (id === 2 ? 2 : id === 4 ? 3 : id === 7 ? 2 : id === 8 ? 3 : id === 12 ? 4 : 1) : 1;
         }
       });
