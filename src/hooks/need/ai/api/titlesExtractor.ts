@@ -38,33 +38,29 @@ export async function extractTitlesFromDocument(document: string): Promise<Title
         ],
         response_format: {
           type: "json_schema",
-          json_schema: {
-            name: "titles_with_descriptions",
-            schema: {
-              type: "object",
-              properties: {
+          schema: {
+            type: "object",
+            properties: {
+              items: {
+                type: "array",
                 items: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      title: { type: "string" },
-                    },
-                    required: ["title"],
-                    additionalProperties: false,
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
                   },
+                  required: ["title"],
+                  additionalProperties: false,
                 },
               },
-              required: ["items"],
-              additionalProperties: false,
             },
-            strict: true,
+            required: ["items"],
+            additionalProperties: false,
           },
         },
       }),
     });
 
-    // Handle errors
+    // Check if response is not ok
     if (!response.ok) {
       const errorData = await response.json();
       return handleAPIError(response, errorData);

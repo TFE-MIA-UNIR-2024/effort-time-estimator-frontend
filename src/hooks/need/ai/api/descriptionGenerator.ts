@@ -52,7 +52,7 @@ export async function generateDescriptionForTitle(
       }),
     });
 
-    // Handle errors
+    // Check if response is not ok
     if (!response.ok) {
       const errorData = await response.json();
       return handleAPIError(response, errorData);

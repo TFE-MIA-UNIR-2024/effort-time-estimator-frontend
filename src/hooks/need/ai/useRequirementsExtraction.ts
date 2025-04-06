@@ -74,6 +74,12 @@ export const useRequirementsExtraction = () => {
           description: "No se ha configurado la clave de API de OpenAI. Contacte al administrador del sistema.",
           variant: "destructive",
         });
+      } else if (errorMessage.includes("inválida")) {
+        toast({
+          title: "Error de configuración",
+          description: "La clave de API de OpenAI es inválida. Por favor verifique la configuración.",
+          variant: "destructive",
+        });
       } else {
         toast({
           title: "Error",
