@@ -45,50 +45,72 @@ export function useAIEstimationHandler(
         parameterIds
       );
 
-      console.log("AI generated weights:", weights);
+      // If we received a proper response with weights
+      if (weights && Object.keys(weights).length > 0) {
+        console.log("AI generated weights:", weights);
 
-      // Ensure all element fields from 1 to 13 are included in the new elementos
-      const newElementos = elementosFields.map((field) => {
-        const existingElement = elementos.find(e => 
-          e.elemento_id === field.id || e.tipo_elemento_afectado_id === field.id
-        );
+        // Ensure all element fields from 1 to 13 are included in the new elementos
+        const newElementos = elementosFields.map((field) => {
+          const existingElement = elementos.find(e => 
+            e.elemento_id === field.id || e.tipo_elemento_afectado_id === field.id
+          );
+          
+          // If this element ID is in selectedIds (or selectedIds is undefined), use the AI prediction
+          // Otherwise, set the value to zero
+          const value = selectedIds 
+            ? (selectedIds.includes(field.id) ? weights[field.label] || 0 : 0)
+            : weights[field.label] || 0;
+
+          return existingElement 
+            ? { ...existingElement, cantidad_estimada: value }
+            : {
+                elemento_id: field.id,
+                nombre: field.label,
+                cantidad_estimada: value,
+                cantidad_real: null,
+                tipo_elemento_afectado_id: field.id
+              };
+        });
+
+        console.log("New elementos after AI generation:", newElementos);
+        console.log("Total AI-generated elementos:", newElementos.length);
+        console.log("Elements set to zero:", elementosFields.filter(field => 
+          !selectedIds?.includes(field.id)).map(field => field.label));
         
-        // If this element ID is in selectedIds (or selectedIds is undefined), use the AI prediction
-        // Otherwise, set the value to zero
-        const value = selectedIds 
-          ? (selectedIds.includes(field.id) ? weights[field.label] || 0 : 0)
-          : weights[field.label] || 0;
-
-        return existingElement 
-          ? { ...existingElement, cantidad_estimada: value }
-          : {
-              elemento_id: field.id,
-              nombre: field.label,
-              cantidad_estimada: value,
-              cantidad_real: null,
-              tipo_elemento_afectado_id: field.id
-            };
-      });
-
-      console.log("New elementos after AI generation:", newElementos);
-      console.log("Total AI-generated elementos:", newElementos.length);
-      console.log("Elements set to zero:", elementosFields.filter(field => 
-        !selectedIds?.includes(field.id)).map(field => field.label));
-      
-      setElementos(newElementos);
-      
-      toast({
-        title: "Éxito",
-        description: "Esfuerzos estimados con IA",
-      });
+        setElementos(newElementos);
+        
+        toast({
+          title: "Éxito",
+          description: "Esfuerzos estimados con IA",
+        });
+      } else {
+        throw new Error("No se recibieron predicciones válidas del servidor");
+      }
     } catch (error: any) {
       console.error("Error generating AI estimation:", error);
       
-      toast({
-        title: "Error",
-        description: "No se pudo generar la estimación con IA. " + (error?.message || "Intentando con predicciones por defecto."),
-        variant: "destructive",
-      });
+      // More specific error messages for different error types
+      if (error.message && error.message.includes("Failed to fetch")) {
+        toast({
+          title: "Error de conexión",
+          description: "No se pudo conectar al servidor de predicciones. Verifique su conexión a internet o inténtelo más tarde.",
+          variant: "destructive",
+        });
+      } else if (error.message && error.message.includes("CORS")) {
+        toast({
+          title: "Error de acceso",
+          description: "El servidor de predicciones no permite solicitudes desde esta aplicación. Contacte al administrador.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo generar la estimación con IA: " + (error?.message || "Error desconocido"),
+          variant: "destructive",
+        });
+      }
+      
+      // Important: We're not setting default values anymore when there's an error
     } finally {
       setAILoading(false);
     }
