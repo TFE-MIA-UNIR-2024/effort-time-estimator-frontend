@@ -1,23 +1,19 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Cpu } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 
 interface NeedHeaderProps {
   title: string;
   code: string;
   onGoBack: () => void;
   onAddRequirement: () => void;
-  onExtractRequirements?: () => void;
-  requirementsCount?: number;
 }
 
 const NeedHeader = ({ 
   title, 
   code, 
   onGoBack, 
-  onAddRequirement, 
-  onExtractRequirements,
-  requirementsCount = 0
+  onAddRequirement
 }: NeedHeaderProps) => {
   return (
     <>
@@ -36,13 +32,7 @@ const NeedHeader = ({
           <h1 className="text-3xl font-bold">{title}</h1>
           <p className="text-gray-600">Code: {code}</p>
         </div>
-        <div className="flex space-x-2">
-          {onExtractRequirements && requirementsCount === 0 && (
-            <Button onClick={onExtractRequirements} variant="outline" className="gap-2">
-              <Cpu className="h-4 w-4" />
-              Extraer Requerimientos con IA
-            </Button>
-          )}
+        <div>
           <Button onClick={onAddRequirement} className="gap-2">
             <Plus className="h-4 w-4" />
             Add Requirement
