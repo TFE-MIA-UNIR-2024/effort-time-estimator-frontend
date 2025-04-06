@@ -56,7 +56,7 @@ export function useFormData(requerimientoId: number, isOpen: boolean): FormData 
   const { parametros, handleParametroChange, setParametros } = useParametersState();
   const { elementos, handleElementChange, setElementos } = useElementsState();
   const { aiLoading, handleGenerateAIEstimation: generateAIEstimation } = 
-    useAIEstimationHandler(elementos, setElementos, elementosFields, requirement);
+    useAIEstimationHandler(elementos, setElementos, elementosFields, requirement, parametros);
 
   // Reset and re-fetch data when requirement ID changes or form opens/closes
   useEffect(() => {

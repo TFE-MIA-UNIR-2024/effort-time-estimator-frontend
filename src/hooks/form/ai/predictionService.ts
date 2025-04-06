@@ -1,6 +1,7 @@
 
 interface PredictionRequest {
   tipo_elemento_afectado_ids: number[];
+  parametro_estimacion_ids: number[];
 }
 
 interface PredictionItem {
@@ -29,21 +30,26 @@ const DEFAULT_PREDICTIONS = {
   13: 5  // PF
 };
 
-export async function getPredictions(elementIds: number[]): Promise<Record<number, number>> {
+export async function getPredictions(
+  elementIds: number[], 
+  parameterIds: number[] = []
+): Promise<Record<number, number>> {
   try {
     console.log("Calling prediction endpoint with selected IDs:", elementIds);
+    console.log("Parameter estimation IDs:", parameterIds);
     
     // Set a timeout to handle slow connections
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     
-    const response = await fetch("https://remotion-predictor.onrender.com/predict", {
+    const response = await fetch("http://18.222.38.104:8000/predict", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        tipo_elemento_afectado_ids: elementIds
+        tipo_elemento_afectado_ids: elementIds,
+        parametro_estimacion_ids: parameterIds
       }),
       signal: controller.signal
     });

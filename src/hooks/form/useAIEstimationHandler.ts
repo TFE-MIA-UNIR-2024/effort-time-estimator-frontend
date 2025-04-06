@@ -7,7 +7,8 @@ export function useAIEstimationHandler(
   elementos: Element[],
   setElementos: (elementos: Element[]) => void,
   elementosFields: { id: number; label: string }[],
-  requirement: any
+  requirement: any,
+  parametros?: Record<number, string>
 ) {
   const [aiLoading, setAILoading] = useState(false);
   const { toast } = useToast();
@@ -28,10 +29,20 @@ export function useAIEstimationHandler(
       console.log("Generating AI estimation for requirement:", requirement.nombrerequerimiento);
       console.log("Using selected element IDs:", selectedIds || "all elements");
       
+      // Get parameter IDs from the parametros object
+      const parameterIds = parametros 
+        ? Object.keys(parametros)
+            .filter(key => parametros[Number(key)])
+            .map(key => Number(key))
+        : [];
+      
+      console.log("Using parameter IDs:", parameterIds);
+      
       const weights = await generateWeights(
         requirement.nombrerequerimiento,
         requirement.cuerpo || "",
-        selectedIds
+        selectedIds,
+        parameterIds
       );
 
       console.log("AI generated weights:", weights);
