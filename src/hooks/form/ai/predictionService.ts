@@ -21,7 +21,7 @@ export async function getPredictions(
       return {};
     }
 
-    const endpoint = "http://18.222.38.104:8000/predict";
+    const endpoint = "https://api.incubemos.la/predict";
     
     // Construct request body according to the new API format
     const requestBody = {
