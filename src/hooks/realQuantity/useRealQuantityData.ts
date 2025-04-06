@@ -86,12 +86,17 @@ export function useRealQuantityData(requerimientoId: number, isOpen: boolean) {
 
       console.log("Saving real quantities:", updates);
 
-      // Update all elements in a transaction using the newly created function
-      const { error } = await supabase.rpc('update_real_quantities', {
+      // Update all elements in a transaction using the updated function
+      const { data, error } = await supabase.rpc('update_real_quantities', {
         updates
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("RPC error details:", error);
+        throw error;
+      }
+
+      console.log("Save result:", data);
 
       toast({
         title: "Éxito",
@@ -99,11 +104,11 @@ export function useRealQuantityData(requerimientoId: number, isOpen: boolean) {
       });
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving real quantities:', error);
       toast({
         title: "Error",
-        description: "No se pudieron guardar las cantidades reales",
+        description: `No se pudieron guardar las cantidades reales: ${error.message || error}`,
         variant: "destructive",
       });
       return false;
