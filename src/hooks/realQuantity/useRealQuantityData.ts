@@ -84,9 +84,9 @@ export function useRealQuantityData(requerimientoId: number, isOpen: boolean) {
         jornada_real: element.jornada_real
       }));
 
-      // Update all elements in a transaction
+      // Update all elements in a transaction using the newly created function
       const { error } = await supabase.rpc('update_real_quantities', {
-        updates: updates
+        updates: JSON.stringify(updates)
       });
 
       if (error) throw error;

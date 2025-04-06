@@ -877,7 +877,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_real_quantities: {
+        Args: {
+          updates: Json
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
