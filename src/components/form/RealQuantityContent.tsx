@@ -60,7 +60,7 @@ const RealQuantityContent = ({
                 </div>
                 <div>
                   <div className="text-sm text-gray-500">Jornada Estimada</div>
-                  <div className="font-medium">{element.jornada_estimada?.toFixed(2) || "N/A"}</div>
+                  <div className="font-medium">{element.jornada_estimada?.toFixed(2) || "0"}</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-500">Jornada Real</div>
