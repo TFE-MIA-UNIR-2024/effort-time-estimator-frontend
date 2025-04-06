@@ -877,6 +877,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      update_estimated_workdays: {
+        Args: {
+          updates: Json
+        }
+        Returns: boolean
+      }
       update_real_quantities: {
         Args: {
           updates: Json

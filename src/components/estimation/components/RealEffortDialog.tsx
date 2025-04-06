@@ -144,6 +144,7 @@ export const RealEffortDialog = ({
         console.log("Updating function points with estimated workday:", updates);
 
         // Update all function points in a transaction
+        // FIXED: Use the correct function name 'update_estimated_workdays'
         const { error: updateError } = await supabase.rpc('update_estimated_workdays', {
           updates: updates
         });
