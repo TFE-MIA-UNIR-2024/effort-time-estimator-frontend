@@ -30,7 +30,14 @@ export function useRealQuantityData(requerimientoId: number, isOpen: boolean) {
       // Get the estimated and real quantities for this requirement
       const { data, error } = await supabase
         .from('punto_funcion')
-        .select('*')
+        .select(`
+          punto_funcionid,
+          tipo_elemento_afectado_id,
+          cantidad_estimada,
+          cantidad_real,
+          jornada_real,
+          jornada_estimada
+        `)
         .eq('requerimientoid', requerimientoId)
         .not('tipo_elemento_afectado_id', 'is', null);
 
@@ -44,6 +51,7 @@ export function useRealQuantityData(requerimientoId: number, isOpen: boolean) {
         cantidad_estimada: item.cantidad_estimada || 0,
         cantidad_real: item.cantidad_real,
         jornada_real: item.jornada_real,
+        jornada_estimada: item.jornada_estimada,
         requerimiento: requirementData?.nombrerequerimiento
       }));
 

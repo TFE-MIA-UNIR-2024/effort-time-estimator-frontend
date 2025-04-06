@@ -43,7 +43,7 @@ const RealQuantityContent = ({
               className="border rounded-md p-4"
             >
               <div className="font-medium">{element.nombre}</div>
-              <div className="grid grid-cols-3 gap-4 mt-2">
+              <div className="grid grid-cols-4 gap-4 mt-2">
                 <div>
                   <div className="text-sm text-gray-500">Cantidad Estimada</div>
                   <div className="font-medium">{element.cantidad_estimada}</div>
@@ -57,6 +57,10 @@ const RealQuantityContent = ({
                     onChange={(e) => onElementChange(element.elemento_id, e.target.value, 'cantidad_real')}
                     placeholder="Ingrese cantidad real"
                   />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">Jornada Estimada</div>
+                  <div className="font-medium">{element.jornada_estimada?.toFixed(2) || "N/A"}</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-500">Jornada Real</div>

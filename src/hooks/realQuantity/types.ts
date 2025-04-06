@@ -6,5 +6,6 @@ export interface ElementWithQuantity {
   cantidad_estimada: number;
   cantidad_real: number | null;
   jornada_real: number | null;
+  jornada_estimada?: number | null;
   requerimiento?: string;
 }
