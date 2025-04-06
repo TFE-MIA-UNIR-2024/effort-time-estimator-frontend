@@ -58,11 +58,13 @@ export const fetchRequirementsForNeed = async (needId: number): Promise<any[] | 
       requerimientoid,
       nombrerequerimiento,
       punto_funcion (
+        punto_funcionid,
         cantidad_estimada,
         tipo_elemento_afectado_id,
         tipo_elemento_afectado (
           nombre
-        )
+        ),
+        jornada_estimada
       )
     `
     )
@@ -201,50 +203,94 @@ export const processRequirements = async (
     complejidadParam?.parametro_estimacionid
   );
 
-  return Promise.all(
-    requirements.map(async (req) => {
-      const puntosFuncion = req.punto_funcion || [];
-      
-      // Calculate total function points
-      const pf = puntosFuncion.reduce(
-        (sum, pf) => sum + (pf.cantidad_estimada || 0),
-        0
-      );
-      
-      // If no function points, set effort to zero
-      if (pf === 0 || puntosFuncion.length === 0) {
-        return {
-          requerimientoid: req.requerimientoid,
-          nombrerequerimiento: req.nombrerequerimiento,
-          pf: 0,
-          esfuerzoEstimado: 0,
-          puntosFuncion: [],
-          factores: {}
-        };
-      }
+  const processedRequirements: Requirement[] = [];
+  const workdayUpdates: { punto_funcionid: number, jornada_estimada: number }[] = [];
 
-      // Calculate effort for each function point using pre-fetched factors
-      const esfuerzoMultiplicativo = await Promise.all(
-        puntosFuncion.map(async (pf) => 
-          calculateEstimationFactors(pf, parametros, complejidadParam, allFactors)
-        )
-      );
-
-      const totalEsfuerzo = esfuerzoMultiplicativo.reduce(
-        (a, b) => a + b,
-        0
-      );
-
-      return {
+  for (const req of requirements) {
+    const puntosFuncion = req.punto_funcion || [];
+    
+    // Calculate total function points
+    const pf = puntosFuncion.reduce(
+      (sum, pf) => sum + (pf.cantidad_estimada || 0),
+      0
+    );
+    
+    // If no function points, set effort to zero
+    if (pf === 0 || puntosFuncion.length === 0) {
+      processedRequirements.push({
         requerimientoid: req.requerimientoid,
         nombrerequerimiento: req.nombrerequerimiento,
-        pf,
-        esfuerzoEstimado: totalEsfuerzo,
-        puntosFuncion,
-        factores: allFactors
-      };
-    })
-  );
+        pf: 0,
+        esfuerzoEstimado: 0,
+        puntosFuncion: [],
+        factores: {}
+      });
+      continue;
+    }
+
+    // Calculate effort for each function point using pre-fetched factors
+    const calculatedEfforts = await Promise.all(
+      puntosFuncion.map(async (pf) => {
+        const effort = await calculateEstimationFactors(pf, parametros, complejidadParam, allFactors);
+        
+        // Add punto_funcion to updates array if calculated effort differs from stored value
+        if (pf.punto_funcionid && (pf.jornada_estimada === null || pf.jornada_estimada === undefined || Math.abs(pf.jornada_estimada - effort) > 0.001)) {
+          workdayUpdates.push({
+            punto_funcionid: pf.punto_funcionid,
+            jornada_estimada: effort
+          });
+        }
+        
+        return effort;
+      })
+    );
+
+    const totalEsfuerzo = calculatedEfforts.reduce(
+      (a, b) => a + b,
+      0
+    );
+
+    processedRequirements.push({
+      requerimientoid: req.requerimientoid,
+      nombrerequerimiento: req.nombrerequerimiento,
+      pf,
+      esfuerzoEstimado: totalEsfuerzo,
+      puntosFuncion,
+      factores: allFactors
+    });
+  }
+
+  // Update the jornada_estimada values in the database if we have updates
+  if (workdayUpdates.length > 0) {
+    await updateEstimatedWorkdays(workdayUpdates);
+  }
+
+  return processedRequirements;
+};
+
+// Update the jornada_estimada values in the database
+export const updateEstimatedWorkdays = async (
+  updates: { punto_funcionid: number, jornada_estimada: number }[]
+): Promise<boolean> => {
+  try {
+    console.log(`Updating estimated workdays for ${updates.length} function points`);
+    
+    // Use the RPC function to update all records in one call
+    const { data, error } = await supabase.rpc('update_estimated_workdays', {
+      updates: updates
+    });
+
+    if (error) {
+      console.error("Error updating estimated workdays:", error);
+      return false;
+    }
+
+    console.log("Successfully updated estimated workdays");
+    return true;
+  } catch (error) {
+    console.error("Exception updating estimated workdays:", error);
+    return false;
+  }
 };
 
 // Fetch requirements with estimations for all needs

@@ -40,6 +40,7 @@ export const useEstimationCalculation = (projectId: number, isOpen: boolean) => 
       }
       
       // Get requirements with estimations for each need
+      // This will also update jornada_estimada in the database
       const estimationsData = await fetchRequirementsWithEstimations(needs, parameters);
       
       // Calculate total project hours
